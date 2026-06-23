@@ -1,0 +1,5 @@
+node_modules/
+smtp-config.json
+server-log.txt
+*.log
+portable-node/

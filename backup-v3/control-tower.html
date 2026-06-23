@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>零件拉动控制塔 v2 · Tesla Logistics Control Tower</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{--bg:#080c14;--card-bg:#111827;--border:rgba(255,255,255,.06);--text:#c8cdd5;--text-dim:#6b7280;--purple:#8b5cf6;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--cyan:#06b6d4}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+  .header{background:var(--card-bg);border-bottom:1px solid var(--border);padding:.6rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .header-left{display:flex;align-items:center;gap:.75rem}
+  .logo{font-size:1.2rem;font-weight:800;color:#fff}
+  .logo span{color:var(--purple)}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .header-right{text-align:right;display:flex;align-items:center;gap:1rem}
+  .live-clock{font-family:'JetBrains Mono','Consolas',monospace;font-size:1.3rem;color:#fff;font-weight:700}
+  .live-date{font-family:'JetBrains Mono','Consolas',monospace;font-size:.7rem;color:var(--text-dim)}
+  .server-badge{font-size:.65rem;padding:.15rem .5rem;border-radius:10px}
+
+  /* Cycle Nav */
+  .cycle-nav{background:rgba(139,92,246,.08);border-bottom:1px solid rgba(139,92,246,.15);padding:.5rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+  .cycle-nav .nav-group{display:flex;align-items:center;gap:.5rem}
+  .cycle-nav button{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);padding:.3rem .8rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:all .2s}
+  .cycle-nav button:hover{background:rgba(139,92,246,.2);border-color:var(--purple)}
+  .cycle-nav button.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .cycle-nav .day-label{font-weight:700;color:#fff;font-size:.9rem}
+  .cycle-nav .cycle-info{font-size:.75rem;color:var(--text-dim)}
+
+  /* Alert Banner */
+  .alert-banner{display:flex;align-items:center;gap:.6rem;padding:.5rem 1.5rem;font-weight:600;font-size:.85rem;transition:all .3s}
+  .alert-banner.ok{background:rgba(16,185,129,.1);color:var(--green);border-bottom:1px solid rgba(16,185,129,.15)}
+  .alert-banner.warn{background:rgba(245,158,11,.1);color:var(--yellow);border-bottom:1px solid rgba(245,158,11,.15)}
+  .alert-banner.danger{background:rgba(239,68,68,.1);color:var(--red);border-bottom:1px solid rgba(239,68,68,.15)}
+  .alert-banner.critical{background:rgba(239,68,68,.2);color:#fff;border-bottom:1px solid rgba(239,68,68,.4);animation:blinkBg 1s infinite}
+  @keyframes blinkBg{0%,100%{background:rgba(239,68,68,.2)}50%{background:rgba(239,68,68,.35)}}
+
+  .main-grid{display:grid;grid-template-columns:1fr 360px;gap:1rem;padding:1rem 1.5rem}
+  .col-left{display:flex;flex-direction:column;gap:1rem}
+
+  .card{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:1rem}
+  .card.stockout{border:1px solid var(--red);box-shadow:0 0 20px rgba(239,68,68,.2)}
+  .card-header{font-size:.7rem;font-weight:600;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;margin-bottom:.6rem}
+
+  /* KPI */
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem}
+  .kpi{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:1rem;position:relative;overflow:hidden;transition:all .3s}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .kpi.inventory::before{background:var(--blue)}.kpi.coverage::before{background:var(--green)}.kpi.risk::before{background:var(--yellow)}.kpi.shift::before{background:var(--purple)}.kpi.warning::before{background:var(--red)}
+  .kpi-label{font-size:.7rem;color:var(--text-dim);font-weight:600;letter-spacing:1px}
+  .kpi-value{font-size:1.8rem;font-weight:800;color:#fff;margin-top:.3rem}
+  .kpi-sub{font-size:.72rem;color:var(--text-dim);margin-top:.15rem}
+  .kpi.stockout-danger{border:2px solid var(--red);animation:kpiBoom 1s ease-in-out infinite;background:rgba(239,68,68,.08)}
+  @keyframes kpiBoom{0%,100%{box-shadow:0 0 8px rgba(239,68,68,.3)}50%{box-shadow:0 0 30px rgba(239,68,68,.7),0 0 60px rgba(239,68,68,.3)}}
+  .stockout-badge{display:inline-block;background:var(--red);color:#fff;font-size:.65rem;padding:.1rem .4rem;border-radius:3px;font-weight:800;animation:blinkBg .6s infinite;margin-left:.3rem;vertical-align:middle}
+
+  /* Inputs */
+  .input-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.5rem}
+  .input-group{display:flex;flex-direction:column;gap:.15rem}
+  .input-group label{font-size:.68rem;font-weight:600;color:var(--text-dim);letter-spacing:.5px}
+  .input-group input,.input-group select{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:6px;color:#fff;padding:.4rem .5rem;font-size:.82rem;width:100%;font-family:'JetBrains Mono','Consolas',monospace;outline:none}
+  .input-group input:focus,.input-group select:focus{border-color:var(--purple)}
+  .input-group input[type=datetime-local]{color-scheme:dark}
+
+  /* Chart */
+  .chart-container{position:relative;height:360px}
+  canvas{width:100%;height:100%}
+
+  /* Vehicle Table */
+  .v-table{width:100%;border-collapse:collapse;font-size:.8rem}
+  .v-table th{text-align:left;padding:.4rem .5rem;font-size:.65rem;font-weight:600;color:var(--text-dim);letter-spacing:1px;border-bottom:1px solid var(--border)}
+  .v-table td{padding:.4rem .5rem;border-bottom:1px solid rgba(255,255,255,.03);white-space:nowrap}
+  .v-table tr:hover td{background:rgba(255,255,255,.015)}
+  .v-table tr.overdue{background:rgba(239,68,68,.06)}
+  .v-table tr.overdue td:first-child{border-left:3px solid var(--red)}
+  .badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600}
+  .badge-locked{background:rgba(16,185,129,.15);color:var(--green)}
+  .badge-pending{background:rgba(245,158,11,.15);color:var(--yellow)}
+  .badge-overdue{background:rgba(239,68,68,.2);color:var(--red);animation:blinkBg 1s infinite}
+  .dock-input{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:4px;color:#fff;padding:.2rem .3rem;font-size:.75rem;width:150px;font-family:'JetBrains Mono','Consolas',monospace}
+  .dock-input:focus{border-color:var(--purple);outline:none}
+  .dock-input[type=datetime-local]{color-scheme:dark}
+  .btn-dock{padding:.2rem .5rem;border-radius:4px;font-size:.68rem;font-weight:600;cursor:pointer;border:none;background:var(--purple);color:#fff;transition:all .2s}
+  .btn-dock:hover{opacity:.85}
+  .btn-del{padding:.2rem .4rem;border-radius:4px;font-size:.65rem;cursor:pointer;border:1px solid rgba(239,68,68,.3);background:transparent;color:var(--red);transition:all .2s}
+  .btn-del:hover{background:rgba(239,68,68,.15)}
+
+  .btn-sm{padding:.3rem .7rem;border-radius:5px;font-size:.7rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+  .btn-sm.test{background:var(--purple);color:#fff}.btn-sm.test:hover{opacity:.85}
+  .btn-sm.save{background:var(--green);color:#fff}.btn-sm.save:hover{opacity:.85}
+  .btn-sm.add{background:var(--cyan);color:#000;font-size:.75rem;padding:.4rem 1rem}
+
+  /* Right Panel */
+  .col-right{display:flex;flex-direction:column;gap:1rem}
+  .timeline-item{padding:.5rem 0 .5rem 1rem;border-left:2px solid var(--border);position:relative;margin-left:.5rem}
+  .timeline-item::before{content:'';position:absolute;left:-5px;top:.7rem;width:8px;height:8px;border-radius:50%}
+  .timeline-item.danger::before{background:var(--red);animation:pulse 1s infinite}
+  .timeline-item.warning::before{background:var(--yellow)}
+  .timeline-item.ok::before{background:var(--green)}
+  .tl-time{font-family:'JetBrains Mono','Consolas',monospace;font-size:.72rem;color:var(--text-dim)}
+  .tl-text{font-size:.8rem;font-weight:600}
+
+  .log-list{max-height:250px;overflow-y:auto}
+  .log-entry{font-size:.72rem;padding:.3rem .5rem;border-radius:4px;margin-bottom:.2rem;font-family:'JetBrains Mono','Consolas',monospace}
+  .log-danger{background:rgba(239,68,68,.1);color:var(--red)}
+  .log-warn{background:rgba(245,158,11,.1);color:var(--yellow)}
+  .log-info{background:rgba(107,114,128,.06);color:var(--text-dim)}
+  .log-critical{background:rgba(239,68,68,.2);color:#fff;font-weight:700}
+
+  .section-hint{font-size:.65rem;color:var(--text-dim);display:flex;justify-content:space-between;align-items:center}
+  .notify-config{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)}
+  .notify-row{display:flex;gap:.4rem;align-items:center;margin-top:.3rem}
+  .notify-row input{flex:1}
+  .tooltip-row{display:flex;align-items:center;gap:.4rem;margin-top:.3rem;font-size:.7rem}
+
+  /* Daily Inventory Grid */
+  .day-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.4rem}
+  .day-cell{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:8px;padding:.5rem;text-align:center;cursor:pointer;transition:all .2s}
+  .day-cell:hover{border-color:var(--purple)}
+  .day-cell.active{border-color:var(--purple);background:rgba(139,92,246,.1)}
+  .day-cell .day-num{font-size:.7rem;color:var(--text-dim)}
+  .day-cell .day-pallets{font-size:1rem;font-weight:700;color:#fff}
+  .day-cell .day-pcs{font-size:.6rem;color:var(--text-dim)}
+  .day-cell .day-adjusted{font-size:.55rem;color:var(--yellow);margin-top:.1rem}
+
+  @media(max-width:1200px){.main-grid{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}.cycle-nav{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="live-dot" id="liveDot"></div>
+    <span class="logo"><span>控制塔</span> v2 零件拉动</span>
+    <span id="serverStatus" class="server-badge" style="background:rgba(107,114,128,.15);color:#6b7280">检测中...</span>
+    <span id="editBadge" class="server-badge" style="background:rgba(107,114,128,.15);color:#6b7280;cursor:pointer" onclick="showEditPanel()" title="点击切换编辑模式">🔒 只读</span>
+  </div>
+  <div class="header-right">
+    <div id="editModePanel" style="display:none;align-items:center;gap:.4rem;margin-right:1rem">
+      <input type="password" id="editPasswordInput" placeholder="编辑密码" style="background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:4px;color:#fff;padding:.25rem .5rem;font-size:.75rem;width:100px" onkeydown="if(event.key==='Enter')enterEditMode()">
+      <button class="btn-dock" onclick="enterEditMode()" style="font-size:.7rem;padding:.25rem .6rem">解锁</button>
+      <button class="btn-del" onclick="document.getElementById('editModePanel').style.display='none'" style="font-size:.7rem">✕</button>
+    </div>
+    <div>
+      <div class="live-date" id="liveDate">--</div>
+      <div class="live-clock" id="liveClock">--:--:--</div>
+    </div>
+  </div>
+</div>
+
+<!-- CYCLE NAVIGATION -->
+<div class="cycle-nav" id="cycleNav">
+  <div class="nav-group">
+    <button onclick="changeDay(-1)" title="前一天">◀</button>
+    <span class="day-label" id="dayLabel">第1天</span>
+    <button onclick="changeDay(1)" title="后一天">▶</button>
+    <span style="font-size:.75rem;color:var(--text-dim)" id="dayDateRange"></span>
+  </div>
+  <div class="nav-group" id="dayDots"></div>
+  <div class="cycle-info" id="cycleInfo"></div>
+</div>
+
+<!-- ALERT BANNER -->
+<div class="alert-banner ok" id="alertBanner"><span id="alertIcon">✅</span><span id="alertText">系统正常</span></div>
+
+<div class="main-grid">
+  <div class="col-left">
+    <!-- KPI -->
+    <div class="kpi-row" style="grid-template-columns:repeat(7,1fr)">
+      <div class="kpi inventory" id="kpiInvCard"><div class="kpi-label">厂内库存<span class="stockout-badge" id="stockoutBadge" style="display:none">断料!</span></div><div class="kpi-value" id="kpiInventory">0</div><div class="kpi-sub">pcs</div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-label" style="color:var(--cyan)">在途库存</div><div class="kpi-value" id="kpiInTransit" style="color:var(--cyan)">0</div><div class="kpi-sub" id="kpiInTransitCount">0车 · 0 pcs</div></div>
+      <div class="kpi coverage"><div class="kpi-label">可撑时长</div><div class="kpi-value" id="kpiCoverage">0</div><div class="kpi-sub">小时</div></div>
+      <div class="kpi risk"><div class="kpi-label">风险等级</div><div class="kpi-value" id="kpiRisk" style="font-size:1.2rem">--</div><div class="kpi-sub">距最晚发车</div></div>
+      <div class="kpi shift"><div class="kpi-label">当前班次</div><div class="kpi-value" id="kpiShift" style="font-size:1.2rem">--</div><div class="kpi-sub" id="kpiShiftEnd">--</div></div>
+      <div class="kpi warning"><div class="kpi-label">断料风险</div><div class="kpi-value" id="kpi24h" style="font-size:1.1rem">--</div><div class="kpi-sub">48h: <span id="kpi48h">--</span></div></div>
+      <div class="kpi" style="--c:var(--purple)"><div class="kpi-label" style="color:var(--purple)">总库存</div><div class="kpi-value" id="kpiTotal" style="color:var(--purple);font-size:1.2rem">0</div><div class="kpi-sub">厂内+在途</div></div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card" id="chartCard"><div class="card-header">📈 库存推移（生产周期全程）</div><div class="chart-container"><canvas id="inventoryChart"></canvas></div></div>
+
+    <!-- VEHICLE TABLE -->
+    <div class="card">
+      <div class="section-hint">
+        <span class="card-header" style="margin-bottom:0">🚛 车辆排程</span>
+        <span>🟡待填报 <span id="pendingCount">0</span> &nbsp; ✅已锁定 <span id="lockedCount">0</span> &nbsp; 🔴超时 <span id="overdueCount">0</span></span>
+      </div>
+      <div style="overflow-x:auto;margin-top:.5rem"><table class="v-table" id="vehicleTable"><thead><tr><th>车次</th><th>到货日</th><th>计划靠台</th><th>物料可用</th><th>最晚靠台</th><th>最晚发车</th><th>装载(pcs)</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+      <div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center">
+        <button class="btn-sm add" onclick="addVehicle()">+ 添加车次</button>
+        <span style="font-size:.7rem;color:var(--text-dim)">共 <span id="totalVehicles">0</span> 车</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="col-right">
+    <!-- CYCLE SETTINGS -->
+    <div class="card">
+      <div class="card-header">📅 生产周期</div>
+      <div class="input-grid">
+        <div class="input-group"><label>起始日</label><input type="datetime-local" id="inProdStart"></div>
+        <div class="input-group"><label>生产天数</label><input type="number" id="inProdDays" step="0.5" min="1" max="14"></div>
+        <div class="input-group"><label>消耗速率(pcs/h)</label><input type="number" id="inConsumption" step="1"></div>
+        <div class="input-group"><label>单车装载(pcs)</label><input type="number" id="inLoad" step="1"></div>
+        <div class="input-group"><label>运输时间(h)</label><input type="number" id="inTransport" step="0.1"></div>
+        <div class="input-group"><label>静置时间(h)</label><input type="number" id="inRest" step="0.1"></div>
+      </div>
+    </div>
+
+    <!-- DAILY INVENTORY -->
+    <div class="card">
+      <div class="card-header">📦 每日开盘库存（点击切换查看日）</div>
+      <div class="day-grid" id="dayGrid"></div>
+      <div class="input-group" style="margin-top:.6rem">
+        <label id="dayAdjustLabel">当前查看：第1天开盘库存（托）</label>
+        <div style="display:flex;gap:.4rem">
+          <input type="number" id="inDayPallets" step="0.1" min="0" style="flex:1">
+          <button class="btn-dock" onclick="adjustDayInventory()" style="padding:.35rem .8rem" id="btnAdjustDay">✅ 微调</button>
+        </div>
+        <span style="font-size:.65rem;color:var(--text-dim)" id="dayAdjustHint">1托=360pcs</span>
+      </div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="card"><div class="card-header">🔔 预警时间线</div><div id="timelinePanel"></div></div>
+
+    <!-- SMTP CONFIG -->
+    <div class="card">
+      <div class="card-header">📧 邮件预警</div>
+      <div class="input-grid">
+        <div class="input-group"><label>SMTP服务器</label><input type="text" id="inSmtpHost" placeholder="smtp.qq.com"></div>
+        <div class="input-group"><label>端口</label><input type="number" id="inSmtpPort" value="465"></div>
+        <div class="input-group"><label>发件邮箱</label><input type="email" id="inSmtpUser"></div>
+        <div class="input-group"><label>授权码</label><input type="password" id="inSmtpPass"></div>
+        <div class="input-group"><label>收件人(逗号分隔)</label><input type="text" id="inRecipients"></div>
+      </div>
+      <div class="tooltip-row" style="margin-top:.5rem;gap:.5rem">
+        <button class="btn-sm save" onclick="saveSmtpConfig()">💾 保存</button>
+        <button class="btn-sm test" onclick="testEmail()">📧 测试邮件</button>
+      </div>
+      <div class="tooltip-row"><input type="checkbox" id="inAutoEmail" checked><label for="inAutoEmail">预警时自动发送邮件</label></div>
+      <div class="tooltip-row"><input type="checkbox" id="inBrowserNotify" checked onchange="requestBrowserNotify()"><label for="inBrowserNotify">浏览器通知</label></div>
+    </div>
+
+    <!-- LOG -->
+    <div class="card"><div class="card-header">📋 事件日志</div><div class="log-list" id="logList"><div class="log-entry log-info">等待启动...</div></div></div>
+  </div>
+</div>
+
+<!-- Alert Popup -->
+<div id="alertPopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1025;border:2px solid var(--red);border-radius:12px;padding:1.5rem 2rem;z-index:999;box-shadow:0 0 40px rgba(239,68,68,.4);text-align:center;max-width:420px">
+  <div style="font-size:3rem;margin-bottom:.5rem">🚨</div>
+  <div style="font-size:1.2rem;font-weight:700;color:#fff;margin-bottom:.5rem" id="popupTitle">紧急预警</div>
+  <div style="font-size:.85rem;color:var(--text-dim);margin-bottom:1rem" id="popupMsg"></div>
+  <div style="display:flex;gap:.5rem;justify-content:center">
+    <button class="btn-sm test" onclick="sendWecomAlert()" id="popupWecomBtn">📱 企微</button>
+    <button class="btn-sm save" onclick="sendAlertEmail(document.getElementById('popupTitle').textContent,document.getElementById('popupMsg').textContent)" id="popupMailBtn">📧 重新发送</button>
+    <button onclick="document.getElementById('alertPopup').style.display='none'" style="padding:.3rem .7rem;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;font-size:.7rem">关闭</button>
+  </div>
+</div>
+
+<script>
+// ==================== CONSTANTS ====================
+const PALLET_SIZE = 360;
+
+// ==================== HELPERS ====================
+function fmtDate(d){return d.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})}
+function fmtTime(d){return d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})}
+function fmtDateTime(d){return fmtDate(d)+' '+fmtTime(d)}
+function fmtFull(d){return d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',weekday:'short'})}
+function toLocalDatetimeStr(d){const pad=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function dayStart(dayIndex){const s=new Date(state.productionStart);s.setDate(s.getDate()+dayIndex);return s}
+function dayEnd(dayIndex){const s=dayStart(dayIndex);s.setHours(23,59,59,999);return s}
+
+let vehIdCounter = 0;
+
+// ==================== STATE (server-shared, localStorage fallback) ====================
+let state = null;
+let serverUpdatedAt = null;
+let isEditMode = false;
+let editPassword = '';
+let stateDirty = false;
+let saveTimeout = null;
+
+function getDefaultState(){
+  const today7am = new Date(); today7am.setHours(7,0,0,0);
+  const s = {productionStart:today7am.toISOString(),productionDays:5,currentViewDay:0,I_open:22320,c:1980,Q:7920,T_trans:7.5,T_rest:0,smtpHost:'',smtpPort:465,smtpUser:'',smtpPass:'',recipients:'',autoEmail:true,webhookUrl:'',vehicles:[],dailyInventory:[]};
+  for (let i=0;i<8;i++){s.vehicles.push({id:'v_'+(++vehIdCounter),name:'第'+(i+1)+'车',targetDay:i<4?0:i<6?1:2,dockTime:null,load:s.Q,status:'pending',depLatest:'',dockLatest:'',notes:''});}
+  return s;
+}
+
+async function loadStateFromServer(){
+  try {
+    const resp = await fetch('/api/state');
+    if (resp.ok){
+      const data = await resp.json();
+      if (data.exists && data.state){
+        serverUpdatedAt = data.updatedAt;
+        addLog('📡 已从服务器加载共享数据', 'info');
+        return data.state;
+      }
+    }
+  } catch(e){ addLog('⚠️ 服务器不可用，尝试本地数据...', 'warn'); }
+  // Fallback to localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('controlTowerV2State'));
+    if (saved && saved.productionStart) { addLog('💾 已从本地缓存加载', 'info'); return saved; }
+  } catch(e){}
+  return getDefaultState();
+}
+
+function initDailyInventory(){
+  if (!state.dailyInventory || state.dailyInventory.length === 0){
+    state.dailyInventory = [];
+    for (let d=0; d<Math.ceil(state.productionDays); d++){
+      state.dailyInventory.push({pallets:Math.round(state.I_open/PALLET_SIZE*10)/10, pcs:state.I_open, adjusted:false});
+    }
+  }
+  while (state.dailyInventory.length < Math.ceil(state.productionDays)){
+    const last = state.dailyInventory[state.dailyInventory.length-1];
+    state.dailyInventory.push({pallets:last?last.pallets:62, pcs:last?last.pcs:22320, adjusted:false});
+  }
+}
+
+async function saveStateToServer(){
+  if (!isEditMode) return;
+  const payload = { password: editPassword, state: state, updatedAt: serverUpdatedAt };
+  try {
+    const resp = await fetch('/api/state', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const r = await resp.json();
+    if (r.ok) {
+      serverUpdatedAt = r.updatedAt;
+      // Also backup to localStorage
+      localStorage.setItem('controlTowerV2State', JSON.stringify(state));
+      stateDirty = false;
+    } else if (r.conflict) {
+      addLog('⚠️ 数据冲突！其他人已修改，请刷新页面', 'critical');
+      showPopup('数据冲突', '数据已被其他人修改，请刷新页面后重新编辑。');
+    } else {
+      addLog('❌ 保存失败: ' + r.msg, 'danger');
+    }
+  } catch(e) {
+    // Offline: save to localStorage as backup
+    localStorage.setItem('controlTowerV2State', JSON.stringify(state));
+    addLog('💾 离线模式：已保存到本地缓存', 'warn');
+    stateDirty = false;
+  }
+}
+
+function saveState(){
+  stateDirty = true;
+  // Debounce: save to server after 2 seconds of inactivity
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(function(){ saveStateToServer(); }, 2000);
+}
+
+function saveStateImmediate(){
+  stateDirty = true;
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveStateToServer();
+}
+
+// ==================== EDIT MODE ====================
+async function enterEditMode(){
+  var pwd = document.getElementById('editPasswordInput').value;
+  if (!pwd) { addLog('❌ 请输入编辑密码', 'warn'); return; }
+  try {
+    var resp = await fetch('/api/auth', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({password: pwd})});
+    var r = await resp.json();
+    if (r.ok) {
+      isEditMode = true;
+      editPassword = pwd;
+      document.getElementById('editModePanel').style.display = 'none';
+      document.getElementById('editBadge').textContent = '✏️ 编辑中';
+      document.getElementById('editBadge').style.background = 'rgba(16,185,129,.2)';
+      document.getElementById('editBadge').style.color = '#10b981';
+      addLog('🔓 已进入编辑模式', 'info');
+      updateAll();
+      // Auto-lock after 30 min
+      if (window._editTimer) clearTimeout(window._editTimer);
+      window._editTimer = setTimeout(exitEditMode, 30*60*1000);
+    } else {
+      addLog('❌ 密码错误', 'danger');
+    }
+  } catch(e) { addLog('❌ 无法连接服务器验证密码', 'danger'); }
+}
+
+function exitEditMode(){
+  isEditMode = false;
+  editPassword = '';
+  document.getElementById('editModePanel').style.display = 'none';
+  document.getElementById('editBadge').textContent = '🔒 只读';
+  document.getElementById('editBadge').style.background = 'rgba(107,114,128,.15)';
+  document.getElementById('editBadge').style.color = '#6b7280';
+  document.getElementById('editPasswordInput').value = '';
+  if (window._editTimer) clearTimeout(window._editTimer);
+  addLog('🔒 已退出编辑模式（只读）', 'info');
+  updateAll();
+}
+
+function showEditPanel(){
+  document.getElementById('editModePanel').style.display = 'flex';
+  document.getElementById('editPasswordInput').focus();
+}
+
+// ==================== BUSINESS LOGIC ====================
+function getData(dayIndex){
+  dayIndex = (dayIndex !== undefined) ? dayIndex : state.currentViewDay;
+  const now = new Date();
+  const dayStartTime = dayStart(dayIndex);
+  const dayEndTime = dayEnd(dayIndex);
+  const elapsedH = Math.max(0, (now - dayStartTime) / 3600000);
+
+  // Opening inventory for this day
+  const inv = state.dailyInventory[dayIndex] || {pcs: state.I_open};
+  let inventory = inv.pcs - elapsedH * state.c;
+
+  // Process vehicles
+  const vs = state.vehicles.map(function(v){
+    const dt = v.dockTime ? new Date(v.dockTime) : null;
+    const available = dt ? new Date(dt.getTime() + state.T_rest*3600000) : null;
+    const hasArrived = available && available <= now;
+    const isDispatched = !!dt; // has a dock time set (been dispatched)
+    const isInTransit = isDispatched && !hasArrived; // dispatched but not yet available
+    const depLatestDate = v.depLatest ? new Date(v.depLatest) : null;
+    const isOverdue = !v.dockTime && v.status==='pending' && depLatestDate && depLatestDate <= new Date(now.getTime()+2*3600000);
+    const isWarning = isOverdue && depLatestDate > now;
+    return {id:v.id,name:v.name,targetDay:v.targetDay,dockTime:dt,available,hasArrived,isDispatched,isInTransit,load:v.load||state.Q,status:v.status,depLatest:v.depLatest,dockLatest:v.dockLatest,depLatestDate,dockLatestDate:v.dockLatest?new Date(v.dockLatest):null,isOverdue,isWarning,notes:v.notes||''};
+  });
+
+  vs.forEach(function(v){ if(v.hasArrived) inventory += v.load; });
+
+  // Calculate in-transit inventory (dispatched but not yet available)
+  const inTransitInventory = vs.filter(function(v){return v.isInTransit;}).reduce(function(sum,v){return sum+v.load;},0);
+  const onSiteInventory = Math.round(inventory);
+
+  const futureVs = vs.filter(function(v){return v.dockTime && !v.hasArrived;}).sort(function(a,b){return a.dockTime-b.dockTime;});
+
+  let stock = inventory, prevTime = now, stockoutTime = null;
+  for (let i=0;i<futureVs.length;i++){
+    const v = futureVs[i];
+    const arrivalTime = new Date(v.dockTime.getTime() + state.T_rest*3600000);
+    const segH = (arrivalTime - prevTime)/3600000;
+    if (segH > 0){
+      const endStock = stock - segH*state.c;
+      if (endStock <= 0 && !stockoutTime) stockoutTime = new Date(prevTime.getTime()+(stock/state.c)*3600000);
+      stock = endStock;
+    }
+    stock += v.load;
+    prevTime = arrivalTime;
+  }
+  if (!stockoutTime && stock <= 0) stockoutTime = prevTime;
+  if (!stockoutTime && stock > 0) stockoutTime = new Date(prevTime.getTime()+(stock/state.c)*3600000);
+
+  const tEmpty = stockoutTime ? (stockoutTime-now)/3600000 : Infinity;
+  const tDepLatest = stockoutTime ? new Date(stockoutTime.getTime()-state.T_trans*3600000) : null;
+  const depRemainingH = tDepLatest ? (tDepLatest-now)/3600000 : Infinity;
+  const tDockLatest = stockoutTime ? new Date(stockoutTime.getTime()-state.T_rest*3600000) : null;
+
+  let riskLevel, riskClass;
+  if (inventory <= 0){ riskLevel='断料!!'; riskClass='red'; }
+  else if (depRemainingH > 3){ riskLevel='>3h可控';riskClass='green';}
+  else if (depRemainingH > 1){ riskLevel='1-3h关注';riskClass='yellow';}
+  else if (depRemainingH > 0){ riskLevel='<1h紧急!';riskClass='red';}
+  else { riskLevel='已超时!!';riskClass='red';}
+
+  const hour = now.getHours();
+  const shiftName = (hour>=7&&hour<19)?'早班':'晚班';
+  const shiftEnd = (hour>=7&&hour<19)?new Date(now.getFullYear(),now.getMonth(),now.getDate(),19,0,0):new Date(now.getFullYear(),now.getMonth(),now.getDate()+(hour>=19?1:0),7,0,0);
+
+  const h24=now.getTime()+24*3600000, h48=now.getTime()+48*3600000;
+  const stockout24=stockoutTime&&stockoutTime<=h24, stockout48=stockoutTime&&stockoutTime<=h48;
+
+  const totalInventory = onSiteInventory + inTransitInventory;
+  return {now,dayStartTime,dayEndTime,elapsedH,inventory:onSiteInventory,onSiteInventory,inTransitInventory,totalInventory,vs,stockoutTime,tEmpty,tDepLatest,depRemainingH,tDockLatest,riskLevel,riskClass,shiftName,shiftEnd,stockout24,stockout48};
+}
+
+// ==================== CHART ====================
+let chart, stockoutMarkerPoint = null;
+
+function findExactStockout(prodStart, allVs){
+  // High-precision stockout detection with 0.1h (6-min) steps, independent of chart rendering
+  const totalH=state.productionDays*24 + 24;
+  const fineStep=0.1;
+  let stock=0, vehIdx=0, prevPt=null, prevStock=null;
+  for (let h=0; h<=totalH; h+=fineStep){
+    const pt=new Date(prodStart.getTime()+h*3600000);
+    const prevCheck=new Date(pt.getTime()-fineStep*3600000);
+    const dayChanged=prevCheck.getDate()!==pt.getDate() && pt.getHours()>=7;
+    if (dayChanged||h===0){
+      const dayIdx=Math.floor(h/24);
+      if (dayIdx<state.dailyInventory.length){ stock=state.dailyInventory[dayIdx].pcs; }
+    }
+    stock-=fineStep*state.c;
+    while (vehIdx<allVs.length){
+      const avail=new Date(new Date(allVs[vehIdx].dockTime).getTime()+state.T_rest*3600000);
+      if (avail<=pt){ stock+=allVs[vehIdx].load; vehIdx++; }
+      else break;
+    }
+    // Detect zero-crossing between previous and current point
+    if (prevStock !== null && prevStock > 0 && stock <= 0){
+      const ratio = prevStock / (prevStock - stock);
+      const exactTime = new Date(prevPt.getTime() + ratio * (pt - prevPt));
+      return { time: exactTime, index: Math.round(h/fineStep) };
+    }
+    prevPt=pt; prevStock=stock;
+  }
+  return null;
+}
+
+function buildProjectionPoints(){
+  const pts=[];
+  const totalH=state.productionDays*24 + 24;
+  const stepH=0.5; // 30-min steps for chart display
+  let stock=0, vehIdx=0;
+  const allVs=state.vehicles.filter(function(v){return v.dockTime;}).sort(function(a,b){return new Date(a.dockTime)-new Date(b.dockTime);});
+  const prodStart = new Date(state.productionStart);
+
+  for (let h=0; h<=totalH; h+=stepH){
+    const pt=new Date(prodStart.getTime()+h*3600000);
+    const prevPt=new Date(pt.getTime()-stepH*3600000);
+    const dayChanged=prevPt.getDate()!==pt.getDate() && pt.getHours()>=7;
+    if (dayChanged||h===0){
+      const dayIdx=Math.floor(h/24);
+      if (dayIdx<state.dailyInventory.length){ stock=state.dailyInventory[dayIdx].pcs; }
+    }
+    stock-=stepH*state.c;
+    while (vehIdx<allVs.length){
+      const avail=new Date(new Date(allVs[vehIdx].dockTime).getTime()+state.T_rest*3600000);
+      if (avail<=pt){ stock+=allVs[vehIdx].load; vehIdx++; }
+      else break;
+    }
+    pts.push({x:pt, y:Math.round(stock)});
+  }
+  return pts;
+}
+
+function updateChart(){
+  const pts=buildProjectionPoints();
+  const labels=pts.map(function(p){return fmtDate(p.x)+'\n'+fmtTime(p.x);});
+  const data=pts.map(function(p){return p.y;});
+
+  // Use high-precision 6-min step calculation for stockout marker
+  const prodStart = new Date(state.productionStart);
+  const allVsSorted = state.vehicles.filter(function(v){return v.dockTime;}).sort(function(a,b){return new Date(a.dockTime)-new Date(b.dockTime);});
+  stockoutMarkerPoint = findExactStockout(prodStart, allVsSorted);
+
+  if (!chart){
+    const ctx=document.getElementById('inventoryChart').getContext('2d');
+    chart=new Chart(ctx,{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'库存',data,borderWidth:2,tension:0,pointRadius:0,pointHitRadius:6,fill:true,order:1,
+          segment:{borderColor:function(ctx){return pts[ctx.p1DataIndex].y<=0?'#ef4444':pts[ctx.p1DataIndex].y<state.Q?'#f59e0b':'#3b82f6';}}
+        },
+        // Stockout marker point (red dot)
+        {label:'断料点',data:[],borderWidth:0,pointRadius:0,order:0,showLine:false}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        layout:{padding:{top:35,right:10,bottom:5,left:5}},
+        clip:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:function(ctx){return ctx.datasetIndex===1?'🔴 断料点':('库存: '+ctx.raw.toLocaleString()+' pcs');},
+            title:function(items){const i=items[0].dataIndex;return i<pts.length?pts[i].x.toLocaleString('zh-CN',{month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}):items[0].label;}}}},
+        scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6b7280',font:{size:9},maxTicksLimit:20}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6b7280',font:{size:9},callback:function(v){return (v/1000).toFixed(1)+'k';}}}}
+      }
+    });
+
+    // Custom plugin: zero line + red zone + stockout marker
+    Chart.register({id:'stockoutOverlay',afterDraw:function(chart){
+      const ctx=chart.ctx, ys=chart.scales.y, xs=chart.scales.x;
+      const zeroY=ys.getPixelForValue(0);
+      // Zero line
+      if(zeroY>=ys.top && zeroY<=ys.bottom){
+        ctx.save();
+        // Red zero line
+        ctx.beginPath(); ctx.setLineDash([6,6]); ctx.strokeStyle='rgba(239,68,68,0.6)'; ctx.lineWidth=1.5;
+        ctx.moveTo(xs.left, zeroY); ctx.lineTo(xs.right, zeroY); ctx.stroke();
+        // Red zone fill below zero
+        const meta=chart.getDatasetMeta(0), d=chart.data.datasets[0].data;
+        const grad=ctx.createLinearGradient(0,zeroY,0,ys.bottom);
+        grad.addColorStop(0,'rgba(239,68,68,0.3)'); grad.addColorStop(1,'rgba(239,68,68,0.05)');
+        ctx.beginPath(); let started=false;
+        for(let i=0;i<meta.data.length;i++){const pt=meta.data[i];if(d[i]<0){if(!started){ctx.moveTo(pt.x,zeroY);started=true;}ctx.lineTo(pt.x,pt.y);}else if(started){ctx.lineTo(pt.x,zeroY);started=false;}}
+        if(started) ctx.lineTo(meta.data[meta.data.length-1].x,zeroY); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+        ctx.restore();
+      }
+
+      // Draw exact stockout marker — always attempt to draw, clip manually
+      if (stockoutMarkerPoint && stockoutMarkerPoint.time){
+        const mx = xs.getPixelForValue(stockoutMarkerPoint.time);
+        const mz = ys.getPixelForValue(0);
+        // Clamp x to chart area
+        const cx = Math.max(xs.left+10, Math.min(xs.right-10, mx));
+        const cz = Math.max(ys.top+30, Math.min(ys.bottom-10, mz));
+        if (mx >= xs.left-50 && mx <= xs.right+50){
+          ctx.save();
+          // Vertical dashed red line to zero
+          ctx.beginPath(); ctx.setLineDash([5,4]); ctx.strokeStyle='rgba(239,68,68,0.7)'; ctx.lineWidth=2;
+          ctx.moveTo(cx, Math.min(mz,ys.bottom)); ctx.lineTo(cx, ys.top+5); ctx.stroke();
+          // Large red dot at zero-crossing
+          ctx.beginPath(); ctx.arc(cx, cz, 7, 0, Math.PI*2);
+          ctx.fillStyle='#ef4444'; ctx.fill();
+          ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.stroke();
+          // Outer glow
+          ctx.beginPath(); ctx.arc(cx, cz, 13, 0, Math.PI*2);
+          ctx.fillStyle='rgba(239,68,68,0.3)'; ctx.fill();
+          // Label above the marker (inside chart area)
+          var labelText = '断料 '+stockoutMarkerPoint.time.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+          ctx.font = 'bold 10px "PingFang SC","Microsoft YaHei",sans-serif';
+          var tw = ctx.measureText(labelText).width;
+          var lx = Math.max(xs.left+tw/2+5, Math.min(xs.right-tw/2-5, cx));
+          var ly = ys.top+16;
+          // Red tag background
+          ctx.fillStyle = '#ef4444';
+          var bw = tw+16, bh = 20;
+          ctx.beginPath(); ctx.roundRect(lx-bw/2, ly-bh/2, bw, bh, 10); ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(labelText, lx, ly);
+          ctx.restore();
+        }
+      }
+    }});
+  } else {
+    chart.data.labels=labels;
+    chart.data.datasets[0].data=data;
+    chart.update('none');
+  }
+}
+
+// ==================== UI UPDATES ====================
+let lastAlertTime={};
+function updateUI(){
+  const d=getData();const now=new Date();
+  document.getElementById('liveClock').textContent=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  document.getElementById('liveDate').textContent=fmtFull(now);
+
+  const invEl=document.getElementById('kpiInventory'),invCard=document.getElementById('kpiInvCard'),sb=document.getElementById('stockoutBadge');
+  invEl.textContent=d.onSiteInventory.toLocaleString();
+  if(d.onSiteInventory<=0){invCard.classList.add('stockout-danger');sb.style.display='inline-block';invEl.style.color='#ef4444';}
+  else if(d.onSiteInventory<state.Q){invCard.classList.remove('stockout-danger');sb.style.display='none';invEl.style.color='#f59e0b';}
+  else {invCard.classList.remove('stockout-danger');sb.style.display='none';invEl.style.color='#fff';}
+  // In-transit inventory
+  const inTransitVs = d.vs.filter(function(v){return v.isInTransit;});
+  document.getElementById('kpiInTransit').textContent = d.inTransitInventory.toLocaleString();
+  document.getElementById('kpiInTransitCount').textContent = inTransitVs.length+'车 · '+d.inTransitInventory.toLocaleString()+' pcs';
+  // Total inventory
+  document.getElementById('kpiTotal').textContent = d.totalInventory.toLocaleString();
+
+  document.getElementById('kpiCoverage').textContent=d.tEmpty===Infinity?'∞':d.tEmpty.toFixed(1);
+  document.getElementById('kpiCoverage').style.color=d.tEmpty<2?'#ef4444':d.tEmpty<6?'#f59e0b':'#fff';
+  document.getElementById('kpiRisk').textContent=d.riskLevel;
+  document.getElementById('kpiRisk').style.color=d.riskClass==='green'?'#10b981':d.riskClass==='yellow'?'#f59e0b':'#ef4444';
+  document.getElementById('kpiShift').textContent=d.shiftName;
+  document.getElementById('kpiShiftEnd').textContent='结束 '+fmtTime(d.shiftEnd);
+  document.getElementById('kpi24h').textContent=d.stockout24?'24h内!':'24h无';
+  document.getElementById('kpi24h').style.color=d.stockout24?'#ef4444':'#10b981';
+  document.getElementById('kpi48h').textContent=d.stockout48?'48h内!':'48h无';
+  document.getElementById('kpi48h').style.color=d.stockout48?'#ef4444':'#10b981';
+
+  const banner=document.getElementById('alertBanner'),aIcon=document.getElementById('alertIcon'),aText=document.getElementById('alertText');
+  if(d.inventory<=0){banner.className='alert-banner critical';aIcon.textContent='🆘';aText.textContent='断料！库存已耗尽！';}
+  else if(d.riskClass==='red'){banner.className='alert-banner danger';aIcon.textContent='🚨';aText.textContent='紧急：距最晚发车不足1小时！';}
+  else if(d.riskClass==='yellow'){banner.className='alert-banner warn';aIcon.textContent='⚠️';aText.textContent='需关注：距最晚发车 '+d.depRemainingH.toFixed(1)+'h';}
+  else {banner.className='alert-banner ok';aIcon.textContent='✅';aText.textContent='系统正常 · 可支撑 '+d.tEmpty.toFixed(1)+'h';}
+
+  document.getElementById('chartCard').classList.toggle('stockout',d.inventory<=0||d.tEmpty<2);
+
+  // Alert checks
+  const overdueVs=d.vs.filter(function(v){return v.isOverdue;});
+  if(overdueVs.length>0){const key='overdue_'+overdueVs.map(function(v){return v.name;}).join(',');if(!lastAlertTime[key]||(now-lastAlertTime[key])>300000){handleOverdueAlert(overdueVs);lastAlertTime[key]=now;}}
+  if(d.inventory<=0){if(!lastAlertTime['stockout']||(now-lastAlertTime['stockout'])>300000){handleStockoutAlert(d);lastAlertTime['stockout']=now;}}
+
+  // Update day nav
+  updateDayNav();
+}
+
+function rebuildVehicleTable(){
+  const d=getData();
+  const pendingVs=d.vs.filter(function(v){return v.status==='pending';}).length;
+  const lockedVs=d.vs.filter(function(v){return v.status==='locked';}).length;
+  const overdueVs=d.vs.filter(function(v){return v.isOverdue;}).length;
+
+  const tbody=document.querySelector('#vehicleTable tbody');
+  tbody.innerHTML=d.vs.map(function(v,i){
+    const statusLabel={pending:'🟡 待填报',locked:'✅ 已锁定',arrived:'🔴 已到港'};
+    const badgeCls={pending:'badge-pending',locked:'badge-locked',arrived:'badge-pending'};
+    let statusHtml;
+    if(v.isOverdue&&v.status==='pending'){
+      statusHtml=v.isWarning?'<span class="badge badge-pending" style="background:rgba(245,158,11,.3);color:#ffb700">⚠️ 即将超时</span>':'<span class="badge badge-overdue">⏰ 超时未填!</span>';
+    }else{statusHtml='<span class="badge '+badgeCls[v.status]+'">'+statusLabel[v.status]+'</span>';}
+    let timeCell,actionCell;
+    if(v.status==='pending'||v.status==='locked'){
+      if (isEditMode){
+        const val=v.dockTime?toLocalDatetimeStr(new Date(v.dockTime)):'';
+        timeCell='<input type="datetime-local" class="dock-input" id="dockInput_'+v.id+'" value="'+val+'">';
+        actionCell='<button class="btn-dock" onclick="confirmDockTime(\''+v.id+'\')">✅ 确认</button>';
+        if(v.isOverdue) actionCell+=' <span style="font-size:.7rem;color:var(--red);font-weight:700">立即填报!</span>';
+      } else {
+        timeCell=v.dockTime?fmtDateTime(new Date(v.dockTime)):'<span style="color:var(--text-dim)">--</span>';
+        actionCell='<span style="font-size:.7rem;color:var(--text-dim)">只读</span>';
+      }
+    }else{
+      timeCell=v.dockTime?'<span style="color:var(--green)">'+fmtDateTime(new Date(v.dockTime))+'</span>':'<span style="color:var(--text-dim)">--</span>';
+      actionCell='<span style="font-size:.7rem;color:var(--text-dim)">已到港</span>';
+    }
+    const delBtn=isEditMode?((v.status==='pending'&&!v.dockTime)?'<button class="btn-del" onclick="deleteVehicle(\''+v.id+'\')" title="删除">✕</button>':(v.status==='locked'?'<button class="btn-del" style="border-color:rgba(245,158,11,.4);color:var(--yellow)" onclick="clearDockTime(\''+v.id+'\')" title="清除靠台时间">↩</button>':'')):'';
+    return '<tr class="'+(v.isOverdue?'overdue':'')+'"><td style="font-weight:600">'+v.name+'</td><td>第'+(v.targetDay+1)+'天</td><td>'+timeCell+'</td><td>'+ (v.dockTime?fmtDateTime(new Date(new Date(v.dockTime).getTime()+state.T_rest*3600000)):'--') +'</td><td>'+ (v.dockLatest?fmtDateTime(new Date(v.dockLatest)):'--') +'</td><td>'+ (v.depLatest?fmtDateTime(new Date(v.depLatest)):'--') +'</td><td>'+v.load+'</td><td>'+statusHtml+'</td><td>'+actionCell+' '+delBtn+'</td></tr>';
+  }).join('');
+
+  document.getElementById('pendingCount').textContent=pendingVs;
+  document.getElementById('lockedCount').textContent=lockedVs;
+  document.getElementById('overdueCount').textContent=overdueVs;
+  document.getElementById('totalVehicles').textContent=d.vs.length;
+
+  // Timeline
+  const tl=document.getElementById('timelinePanel'),items=[];
+  if(d.stockoutTime&&d.tEmpty<48){
+    const exactTimeStr = d.stockoutTime.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    items.push({cls:'danger',time:'🔴 精确断料 '+exactTimeStr,text:(d.tEmpty<=0?'⛔ 已发生!':d.tEmpty.toFixed(2)+' 小时后 ('+Math.round(d.tEmpty*60)+'分钟)'),color:'#ef4444'});
+  }
+  if(d.tDepLatest) items.push({cls:d.depRemainingH<=0?'danger':'warning',time:'最晚发车 '+fmtDateTime(d.tDepLatest),text:'剩余 '+(d.depRemainingH<=0?'已超时!':d.depRemainingH.toFixed(1)+'h'),color:d.depRemainingH<=0?'#ef4444':'#f59e0b'});
+  if(d.tDockLatest) items.push({cls:'warning',time:'最晚靠台 '+fmtDateTime(d.tDockLatest),text:'为不断料的最晚到港时间',color:'#f59e0b'});
+  items.push({cls:'ok',time:'可撑至 '+(d.tEmpty===Infinity?'∞':fmtDateTime(new Date(d.now.getTime()+d.tEmpty*3600000))),text:d.tEmpty.toFixed(1)+'h（含在途）',color:'#10b981'});
+  tl.innerHTML=items.map(function(i){return '<div class="timeline-item '+i.cls+'"><div class="tl-time">'+i.time+'</div><div class="tl-text" style="color:'+i.color+'">'+i.text+'</div></div>';}).join('');
+
+  updateDayGrid();
+}
+
+function updateAll(){
+  // Toggle read-only state on all inputs
+  var inputs = document.querySelectorAll('input:not(#editPasswordInput):not(#inSmtpPass), select, textarea');
+  var buttons = document.querySelectorAll('.btn-dock, .btn-sm.add, .btn-del, #inDayPallets ~ button');
+  for (var i=0;i<inputs.length;i++){ inputs[i].disabled = !isEditMode; }
+  // Always keep SMTP config editable (it's local to this browser)
+  document.getElementById('inSmtpHost').disabled = false;
+  document.getElementById('inSmtpPort').disabled = false;
+  document.getElementById('inSmtpUser').disabled = false;
+  document.getElementById('inSmtpPass').disabled = false;
+  document.getElementById('inRecipients').disabled = false;
+
+  updateUI();rebuildVehicleTable();updateChart();
+}
+
+// ==================== DAY NAVIGATION ====================
+function changeDay(delta){
+  const newDay=state.currentViewDay+delta;
+  if(newDay>=0&&newDay<Math.ceil(state.productionDays)){state.currentViewDay=newDay;saveState();updateAll();}
+}
+
+function updateDayNav(){
+  const total=Math.ceil(state.productionDays);
+  const cur=state.currentViewDay;
+  document.getElementById('dayLabel').textContent='第'+(cur+1)+'天 / 共'+total+'天';
+  const ds=dayStart(cur);
+  document.getElementById('dayDateRange').textContent=ds.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'short'});
+  document.getElementById('cycleInfo').textContent='生产周期：'+fmtDate(dayStart(0))+' - '+fmtDate(dayEnd(Math.ceil(state.productionDays)-1));
+
+  // Day dots
+  let dotsHtml='';
+  for(let i=0;i<total;i++){dotsHtml+='<button class="'+(i===cur?'active':'')+'" onclick="changeDay('+(i-cur)+')" style="font-size:.7rem;padding:.2rem .6rem">D'+(i+1)+'</button>';}
+  document.getElementById('dayDots').innerHTML=dotsHtml;
+
+  document.getElementById('dayAdjustLabel').textContent='当前查看：第'+(cur+1)+'天开盘库存（托）';
+  // Only update the input if user is not currently editing it
+  var palletInput=document.getElementById('inDayPallets');
+  if (document.activeElement !== palletInput){
+    var inv=state.dailyInventory[cur]||{pallets:62};
+    palletInput.value=inv.pallets;
+    document.getElementById('dayAdjustHint').textContent='= '+(inv.pallets*PALLET_SIZE).toLocaleString()+' pcs (1托='+PALLET_SIZE+'pcs)'+(inv.adjusted?' ⚠️ 已微调':'');
+  }
+}
+
+function updateDayGrid(){
+  const grid=document.getElementById('dayGrid');
+  let html='';
+  for(let i=0;i<Math.ceil(state.productionDays);i++){
+    const inv=state.dailyInventory[i]||{pallets:62,pcs:22320,adjusted:false};
+    html+='<div class="day-cell'+(i===state.currentViewDay?' active':'')+'" onclick="changeDay('+(i-state.currentViewDay)+')"><div class="day-num">第'+(i+1)+'天</div><div class="day-pallets">'+inv.pallets+'托</div><div class="day-pcs">'+(inv.pallets*PALLET_SIZE).toLocaleString()+'pcs</div>'+(inv.adjusted?'<div class="day-adjusted">已微调</div>':'')+'</div>';
+  }
+  grid.innerHTML=html;
+}
+
+function adjustDayInventory(){
+  const pallets=parseFloat(document.getElementById('inDayPallets').value)||0;
+  const pcs=Math.round(pallets*PALLET_SIZE);
+  const d=state.currentViewDay;
+  if(!state.dailyInventory[d]) state.dailyInventory[d]={pallets:0,pcs:0,adjusted:false};
+  state.dailyInventory[d].pallets=pallets;
+  state.dailyInventory[d].pcs=pcs;
+  state.dailyInventory[d].adjusted=true;
+  saveState();
+  addLog('📝 第'+(d+1)+'天开盘库存微调为 '+pallets+'托 ('+pcs.toLocaleString()+'pcs)','info');
+  updateAll();
+}
+
+// ==================== VEHICLE MANAGEMENT ====================
+function addVehicle(){
+  const idx=state.vehicles.length+1;
+  const v={id:'v_'+(++vehIdCounter),name:'第'+idx+'车',targetDay:state.currentViewDay,dockTime:null,load:state.Q,status:'pending',depLatest:'',dockLatest:'',notes:''};
+  state.vehicles.push(v);
+  saveStateImmediate();updateAll();
+  addLog('➕ 已添加 '+v.name+'（到货日：第'+(v.targetDay+1)+'天）','info');
+}
+
+function clearDockTime(id){
+  const idx=state.vehicles.findIndex(function(v){return v.id===id;});
+  if(idx===-1) return;
+  const v=state.vehicles[idx];
+  if(v.status!=='locked'){addLog('❌ 只能清除已锁定车辆的靠台时间','warn');return;}
+  const oldLoad=v.load;
+  v.dockTime=null; v.status='pending'; v.depLatest=''; v.dockLatest='';
+  recalcVehicleDeadlines();
+  saveStateImmediate();updateAll();
+  addLog('↩️ '+v.name+' 靠台时间已清除 · 在途库存-'+oldLoad.toLocaleString()+'pcs','warn');
+}
+
+function deleteVehicle(id){
+  const idx=state.vehicles.findIndex(function(v){return v.id===id;});
+  if(idx===-1) return;
+  const v=state.vehicles[idx];
+  if(v.status!=='pending'||v.dockTime){addLog('❌ 无法删除已锁定的车辆（请先清除靠台时间）','warn');return;}
+  state.vehicles.splice(idx,1);
+  saveStateImmediate();updateAll();
+  addLog('🗑️ 已删除 '+v.name,'info');
+}
+
+function confirmDockTime(id){
+  const input=document.getElementById('dockInput_'+id);
+  if(!input) return;
+  setVehicleDock(id,input.value);
+}
+
+function setVehicleDock(id,value){
+  if(!value){addLog('❌ 请输入有效的靠台时间','warn');return;}
+  const dt=new Date(value);
+  if(isNaN(dt.getTime())){addLog('❌ 时间格式错误','warn');return;}
+  const idx=state.vehicles.findIndex(function(v){return v.id===id;});
+  if(idx===-1) return;
+  state.vehicles[idx].dockTime=dt.toISOString();
+  state.vehicles[idx].status='locked';
+  // Determine target day from dock time
+  const prodStart=new Date(state.productionStart);
+  const dayDiff=Math.floor((dt-prodStart)/86400000);
+  if(dayDiff>=0) state.vehicles[idx].targetDay=dayDiff;
+  recalcVehicleDeadlines();
+  saveStateImmediate();updateAll();
+  addLog('✅ '+state.vehicles[idx].name+' 靠台时间 '+fmtDateTime(dt)+' · 库存+'+state.vehicles[idx].load.toLocaleString()+'pcs','info');
+}
+
+function recalcVehicleDeadlines(){
+  const now=new Date();
+  let stock=state.dailyInventory[state.currentViewDay]?state.dailyInventory[state.currentViewDay].pcs:state.I_open;
+  let t=now;
+  const locked=state.vehicles.filter(function(v){return v.dockTime&&new Date(v.dockTime)>t;}).sort(function(a,b){return new Date(a.dockTime)-new Date(b.dockTime);});
+  for(let i=0;i<locked.length;i++){
+    const arrival=new Date(new Date(locked[i].dockTime).getTime()+state.T_rest*3600000);
+    const segH=(arrival-t)/3600000;
+    stock-=segH*state.c;if(stock<0) stock=0;stock+=locked[i].load;t=arrival;
+  }
+  const pending=state.vehicles.filter(function(v){return v.status==='pending';});
+  for(let i=0;i<pending.length;i++){
+    const remainingH=stock/state.c;
+    pending[i].dockLatest=new Date(t.getTime()+remainingH*3600000).toISOString();
+    pending[i].depLatest=new Date(t.getTime()+(remainingH-state.T_trans)*3600000).toISOString();
+  }
+  saveState();
+}
+
+// ==================== ALERTS ====================
+function handleOverdueAlert(overdueVehicles){
+  const names=overdueVehicles.map(function(v){return v.name;}).join('、');
+  const hasWarning=overdueVehicles.some(function(v){return v.isWarning;});
+  const hasOverdue=overdueVehicles.some(function(v){return !v.isWarning;});
+  let title,msg,level;
+  if(hasOverdue){title='🚨 发车超时预警';msg=names+' 已超过最晚发车时间！\n请立即登录控制塔填报。\n超时车辆：'+overdueVehicles.filter(function(v){return !v.isWarning;}).map(function(v){return v.name+' 最晚发车 '+fmtDateTime(new Date(v.depLatest));}).join('；');level='critical';}
+  else {title='⚠️ 发车预警（不足2小时）';msg=names+' 距最晚发车不足2小时，请尽快填报！\n预警车辆：'+overdueVehicles.map(function(v){return v.name+' 最晚发车 '+fmtDateTime(new Date(v.depLatest));}).join('；');level='warn';}
+  addLog(msg,level);showPopup(title,msg);sendBrowserNotify('零件拉动预警',msg);
+  if(state.autoEmail!==false) sendAlertEmail(title,msg);
+}
+
+function handleStockoutAlert(d){
+  const msg='🆘 库存已耗尽 ('+d.inventory+' pcs)！\n断料时间 '+fmtDateTime(d.stockoutTime)+'\n请立即安排紧急补货！';
+  addLog(msg,'critical');showPopup('断料紧急预警',msg);sendBrowserNotify('🚨 断料预警',msg);
+  if(state.autoEmail!==false) sendAlertEmail('🆘 断料紧急预警',msg);
+}
+
+function showPopup(title,msg){
+  document.getElementById('popupTitle').textContent=title;document.getElementById('popupMsg').textContent=msg;
+  document.getElementById('alertPopup').style.display='block';
+  document.getElementById('popupWecomBtn').style.display=state.webhookUrl?'':'none';
+  document.getElementById('popupMailBtn').style.display=(state.smtpHost&&state.recipients)?'':'none';
+}
+
+// ==================== EMAIL / NOTIFICATIONS ====================
+async function sendAlertEmail(title,msg){
+  addLog('📧 正在发送预警邮件...','info');
+  try{
+    const resp=await fetch('/api/send-alert',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:title,body:msg})});
+    const r=await resp.json();
+    if(r.ok) addLog('📧 预警邮件已自动发送','info');else addLog('❌ 邮件失败: '+r.msg,'danger');
+  }catch(e){addLog('❌ 邮件服务未连接','danger');}
+}
+
+function saveSmtpConfig(){
+  state.smtpHost=document.getElementById('inSmtpHost').value.trim();state.smtpPort=parseInt(document.getElementById('inSmtpPort').value)||465;
+  state.smtpUser=document.getElementById('inSmtpUser').value.trim();state.smtpPass=document.getElementById('inSmtpPass').value;
+  state.recipients=document.getElementById('inRecipients').value.trim();saveState();
+  fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:state.smtpHost,port:state.smtpPort,user:state.smtpUser,pass:state.smtpPass,recipients:state.recipients})}).catch(function(){});
+  // Also save SMTP to shared state
+  saveStateImmediate();
+  addLog('💾 邮件配置已保存','info');
+}
+
+async function testEmail(){
+  try{const r=await(await fetch('/api/test-email',{method:'POST',headers:{'Content-Type':'application/json'}})).json();addLog(r.ok?'✅ 测试邮件已发送':'❌ '+r.msg,r.ok?'info':'danger');}
+  catch(e){addLog('❌ 邮件服务未连接','danger');}
+}
+
+async function sendWecomAlert(){
+  const url=state.webhookUrl;if(!url){addLog('❌ 未配置企微Webhook','warn');return;}
+  const d=getData();
+  let c='## 🚨 零件拉动控制塔预警\n> 时间：'+fmtDateTime(new Date())+'\n> 库存：**'+d.inventory.toLocaleString()+' pcs**\n> 可撑：**'+d.tEmpty.toFixed(1)+'h**\n';
+  const ov=d.vs.filter(function(v){return v.isOverdue;});
+  if(ov.length>0) c+='> ⚠️ 超时：**'+ov.map(function(v){return v.name;}).join('、')+'**\n';
+  if(d.stockoutTime&&d.tEmpty<48) c+='> 🔴 断料：**'+fmtDateTime(d.stockoutTime)+'**\n';
+  try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({msgtype:'markdown',markdown:{content:c}})});addLog(r.ok?'📱 企微已发送':'❌ 企微失败','info');}catch(e){addLog('❌ 企微网络错误','danger');}
+}
+
+function sendBrowserNotify(title,body){if('Notification' in window&&Notification.permission==='granted'&&document.getElementById('inBrowserNotify').checked){new Notification(title,{body:body,icon:'🚛'});}}
+function requestBrowserNotify(){if('Notification' in window&&Notification.permission==='default') Notification.requestPermission();}
+
+// ==================== SERVER STATUS ====================
+async function checkServerStatus(){
+  const dot=document.getElementById('liveDot'),badge=document.getElementById('serverStatus');
+  try{const r=await fetch('/api/config');if(r.ok){dot.style.background='#10b981';badge.textContent='🟢 在线';badge.style.background='rgba(16,185,129,.15)';badge.style.color='#10b981';return true;}}catch(e){}
+  dot.style.background='#ef4444';badge.textContent='🔴 离线';badge.style.background='rgba(239,68,68,.15)';badge.style.color='#ef4444';return false;
+}
+
+async function syncSmtpFromServer(){
+  try{const r=await fetch('/api/config');if(r.ok){const c=await r.json();if(c.user){state.smtpHost=c.host||state.smtpHost;state.smtpPort=c.port||state.smtpPort;state.smtpUser=c.user||state.smtpUser;state.recipients=c.recipients||state.recipients;if(!state.smtpPass) state.smtpPass='from-server';saveState();syncInputs();addLog('📡 已同步邮件配置','info');return true;}}}catch(e){}
+  return false;
+}
+
+// ==================== INPUT SYNC ====================
+function syncInputs(){
+  document.getElementById('inProdStart').value=toLocalDatetimeStr(new Date(state.productionStart));
+  document.getElementById('inProdDays').value=state.productionDays;
+  document.getElementById('inConsumption').value=state.c;
+  document.getElementById('inLoad').value=state.Q;
+  document.getElementById('inTransport').value=state.T_trans;
+  document.getElementById('inRest').value=state.T_rest;
+  document.getElementById('inSmtpHost').value=state.smtpHost||'';
+  document.getElementById('inSmtpPort').value=state.smtpPort||465;
+  document.getElementById('inSmtpUser').value=state.smtpUser||'';
+  document.getElementById('inSmtpPass').value=state.smtpPass||'';
+  document.getElementById('inRecipients').value=state.recipients||'';
+  document.getElementById('inAutoEmail').checked=state.autoEmail!==false;
+  const inv=state.dailyInventory[state.currentViewDay]||{pallets:62};
+  document.getElementById('inDayPallets').value=inv.pallets;
+  updateDayGrid();
+}
+
+function bindInputs(){
+  document.getElementById('inProdStart').addEventListener('change',function(e){state.productionStart=new Date(e.target.value).toISOString();initDailyInventory();saveState();updateAll();});
+  document.getElementById('inProdDays').addEventListener('input',function(e){state.productionDays=parseFloat(e.target.value)||5;initDailyInventory();saveState();updateAll();});
+  document.getElementById('inConsumption').addEventListener('input',function(e){state.c=parseFloat(e.target.value)||0;saveState();updateAll();});
+  document.getElementById('inLoad').addEventListener('input',function(e){state.Q=parseFloat(e.target.value)||0;state.vehicles.forEach(function(v){v.load=state.Q;});saveState();updateAll();});
+  document.getElementById('inTransport').addEventListener('input',function(e){state.T_trans=parseFloat(e.target.value)||0;saveState();updateAll();});
+  document.getElementById('inRest').addEventListener('input',function(e){state.T_rest=parseFloat(e.target.value)||0;saveState();updateAll();});
+  document.getElementById('inAutoEmail').addEventListener('change',function(e){state.autoEmail=e.target.checked;saveState();});
+}
+
+// ==================== LOGGING ====================
+function addLog(msg,level){
+  level=level||'info';
+  const list=document.getElementById('logList'),time=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const entry=document.createElement('div');entry.className='log-entry log-'+level;entry.textContent='['+time+'] '+msg;
+  list.prepend(entry);if(list.children.length>80) list.removeChild(list.lastChild);list.scrollTop=0;
+}
+
+// ==================== TICK ====================
+function tick(){
+  const now=new Date();
+  document.getElementById('liveClock').textContent=now.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  if(now.getSeconds()%10===0&&now.getSeconds()!==(tick._lt||-1)){tick._lt=now.getSeconds();updateUI();updateChart();}
+}
+
+// ==================== INIT ====================
+async function init(){
+  // Load shared state from server (or localStorage fallback)
+  state = await loadStateFromServer();
+  initDailyInventory();
+
+  syncInputs();bindInputs();updateAll();
+  const serverOk=await checkServerStatus();
+  if(serverOk){await syncSmtpFromServer();addLog('🟢 后端已连接 · v3 共享模式','info');}
+  else addLog('🔴 后端未连接！请通过 http://localhost:3456 打开','critical');
+  addLog('🔒 当前为只读模式，点右上角解锁编辑', 'info');
+  const d=getData();
+  addLog('📦 第'+(state.currentViewDay+1)+'天 库存:'+d.inventory.toLocaleString()+'pcs · 可撑'+d.tEmpty.toFixed(1)+'h · '+d.shiftName,'info');
+  addLog('📅 生产周期：'+Math.ceil(state.productionDays)+'天 · '+state.vehicles.length+'车次','info');
+  const overdueNow=d.vs.filter(function(v){return v.isOverdue;});
+  if(overdueNow.length>0){addLog('⚠️ 检测到'+overdueNow.length+'台超时车辆，触发预警...','warn');handleOverdueAlert(overdueNow);}
+  if(d.inventory<=0){addLog('⚠️ 库存耗尽，触发预警...','warn');handleStockoutAlert(d);}
+  requestBrowserNotify();
+  setInterval(tick,1000);setInterval(checkServerStatus,30000);
+}
+init();
+</script>
+</body>
+</html>

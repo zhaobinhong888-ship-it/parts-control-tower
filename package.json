@@ -1,0 +1,19 @@
+{
+  "name": "parts-control-tower",
+  "version": "2.6.0",
+  "description": "Tesla Parts Logistics Control Tower",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "nodemailer": "^8.0.10",
+    "xlsx": "^0.18.5"
+  }
+}

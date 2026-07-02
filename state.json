@@ -25,7 +25,7 @@
       "depLatest": "2026-07-01T02:46:21.818Z",
       "dockLatest": "2026-07-01T10:16:21.818Z",
       "notes": "",
-      "shipId": ""
+      "shipId": "ship-294242n"
     },
     {
       "id": "v_3",
@@ -324,5 +324,5 @@
       "locked": true
     }
   ],
-  "updatedAt": "2026-07-02T14:37:34.364Z"
+  "updatedAt": "2026-07-02T14:41:06.115Z"
 }

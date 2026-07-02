@@ -787,7 +787,7 @@ function rebuildVehicleTable(){
     let timeCell,actionCell,shipCell;
     var shipVal=v.shipId||'';
     if(isEditMode){
-      shipCell='<input type="text" class="dock-input" style="width:80px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveState();}\" placeholder="Ship#">';
+      shipCell='<input type="text" class="dock-input" style="width:140px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveState();}\" placeholder="Ship#">';
     } else {
       shipCell=shipVal||'<span style="color:var(--text-dim)">--</span>';
     }
@@ -965,6 +965,7 @@ function addVehicle(){
   const idx=state.vehicles.length+1;
   const v={id:'v_'+(++vehIdCounter),name:'第'+idx+'车',shipId:'',targetDay:state.currentViewDay,dockTime:null,load:state.Q,status:'pending',depLatest:'',dockLatest:'',notes:''};
   state.vehicles.push(v);
+  recalcVehicleDeadlines();
   saveStateImmediate();updateAll();
   addLog('➕ 已添加 '+v.name+'（到货日：第'+(v.targetDay+1)+'天）','info');
 }

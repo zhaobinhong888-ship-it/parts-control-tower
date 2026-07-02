@@ -231,6 +231,21 @@
         <span style="font-size:.7rem;color:var(--text-dim)">共 <span id="totalVehicles">0</span> 车</span>
       </div>
     </div>
+
+    <!-- GPS TRACKING -->
+    <div class="card" id="gpsCard">
+      <div class="section-hint">
+        <span class="card-header" style="margin-bottom:0">🛰️ GPS 实时轨迹</span>
+        <span style="font-size:.65rem;color:var(--text-dim)">承运商追踪</span>
+      </div>
+      <div style="display:flex;gap:.4rem;margin:.5rem 0;align-items:center">
+        <input type="text" id="gpsBaseUrl" placeholder="轨迹网址模板，{id}替换运单号" style="flex:1;background:#111;border:1px solid #222;border-radius:6px;color:#e0e0e0;padding:.35rem .5rem;font-size:.72rem;font-family:'JetBrains Mono','Consolas',monospace;outline:none">
+        <button class="btn-sm test" onclick="loadGpsIframe()" style="font-size:.65rem">🔄 加载</button>
+        <span style="font-size:.6rem;color:#666">自动选当前页第一辆有Ship号的车</span>
+      </div>
+      <iframe id="gpsIframe" style="width:100%;height:420px;border:1px solid #222;border-radius:8px;background:#fff" src="about:blank" allow="geolocation"></iframe>
+      <div style="font-size:.6rem;color:#666;margin-top:.3rem" id="gpsInfo">输入轨迹网址模板后点加载。{id} 会被替换为车辆Ship号</div>
+    </div>
   </div>
 
   <!-- RIGHT PANEL -->
@@ -877,6 +892,20 @@ function updateNextMonday(){
   document.getElementById('nextMondayDetail').textContent='= '+totalPcs.toLocaleString()+' pcs · 周收班库存'+Math.round(stock).toLocaleString()+' + 在途'+transitPcs.toLocaleString()+' · '+stillTransit.length+'车未到';
 }
 
+function loadGpsIframe(){
+  var baseUrl=document.getElementById('gpsBaseUrl').value.trim();
+  if(!baseUrl){ document.getElementById('gpsInfo').textContent='请先输入轨迹网址模板'; return; }
+  // Find first vehicle with shipId on current view
+  var vs=state.vehicles.filter(function(v){return v.shipId;});
+  if(vs.length===0){ document.getElementById('gpsInfo').textContent='当前没有填写Ship号的车辆'; return; }
+  var shipId=vs[0].shipId;
+  var url=baseUrl.replace(/\{id\}/g,shipId);
+  document.getElementById('gpsIframe').src=url;
+  document.getElementById('gpsInfo').textContent='当前追踪：'+vs[0].name+' · Ship: '+shipId+' · '+url;
+  // Save baseUrl to state
+  state.gpsBaseUrl=baseUrl; saveState();
+}
+
 function updateAll(){
   // Toggle read-only state on all inputs
   var inputs = document.querySelectorAll('input:not(#editPasswordInput):not(#inSmtpPass), select, textarea');
@@ -1147,6 +1176,8 @@ function syncInputs(){
   document.getElementById('inLoad').value=state.Q;
   document.getElementById('inTransport').value=state.T_trans;
   document.getElementById('inRest').value=state.T_rest;
+  document.getElementById('gpsBaseUrl').value=state.gpsBaseUrl||'';
+  if(state.gpsBaseUrl) loadGpsIframe();
   document.getElementById('inSmtpHost').value=state.smtpHost||'';
   document.getElementById('inSmtpPort').value=state.smtpPort||465;
   document.getElementById('inSmtpUser').value=state.smtpUser||'';

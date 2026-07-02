@@ -145,5 +145,73 @@ app.post('/api/test-email', async function(req, res) {
   } catch(err) { log('TEST_ERR: '+err.message); res.status(500).json({ ok: false, msg: err.message }); }
 });
 
+// ============ Background Alert Checker (runs independently, no browser needed) ============
+var ALERTS_FILE = path.join(__dirname, 'alerts-sent.json');
+function loadAlertsSent() { try { return JSON.parse(fs.readFileSync(ALERTS_FILE,'utf-8')); } catch(e) { return {}; } }
+function saveAlertsSent(a) { fs.writeFileSync(ALERTS_FILE, JSON.stringify(a,null,2), 'utf-8'); }
+
+function checkBackgroundAlerts(){
+  var s = loadSharedState(); if (!s) return;
+  var cfg = loadCfg(); if (!cfg.host || !cfg.user) return;
+  var now = new Date();
+  var prodStart = new Date(s.productionStart);
+  var productionEnd = new Date(prodStart.getTime() + s.productionDays*24*3600000);
+  if (now > productionEnd) return; // Production ended, no alerts needed
+
+  var sent = loadAlertsSent();
+  var overdueVehicles = [];
+
+  (s.vehicles||[]).forEach(function(v){
+    if (!v.dockTime && v.status==='pending' && v.depLatest){
+      var depLatest = new Date(v.depLatest);
+      var warnTime = new Date(depLatest.getTime() - 2*3600000); // 2h before latest departure
+      if (now >= warnTime && depLatest > now){
+        overdueVehicles.push({name:v.name, depLatest:v.depLatest, warning:true});
+      } else if (now >= depLatest){
+        overdueVehicles.push({name:v.name, depLatest:v.depLatest, warning:false});
+      }
+    }
+  });
+
+  if (overdueVehicles.length === 0) return;
+
+  var key = overdueVehicles.map(function(v){return v.name+'_'+(v.warning?'w':'o');}).join(',');
+  // Don't spam: max 1 alert per 10 min for same vehicles
+  if (sent[key] && (now - new Date(sent[key])) < 600000) return;
+
+  // Build and send alert email
+  var names = overdueVehicles.map(function(v){return v.name;}).join(',');
+  var hasOverdue = overdueVehicles.some(function(v){return !v.warning;});
+  var title = hasOverdue ? '🚨 发车超时预警 - 后台' : '⚠️ 发车预警(不足2h) - 后台';
+  var body = names + (hasOverdue ? ' 已超过最晚发车时间！' : ' 距最晚发车不足2小时！') +
+    '\n请登录控制塔填报：https://www.dsfile.vip/control-tower/\n预警车辆：' +
+    overdueVehicles.map(function(v){return v.name+' 最晚发车 '+new Date(v.depLatest).toLocaleString('zh-CN');}).join('; ');
+
+  try {
+    var transporter = nodemailer.createTransport({
+      host: cfg.host, port: cfg.port||465, secure: true,
+      auth: { user: cfg.user, pass: cfg.pass }, tls: { rejectUnauthorized: false }
+    });
+    var t = new Date().toLocaleString('zh-CN');
+    var lines = body.split('\n').map(function(l){return '<p style="margin:0 0 8px;font-size:14px">'+l+'</p>';}).join('');
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'+
+      '<div style="font-family:PingFang SC,Microsoft YaHei,Arial,sans-serif;max-width:600px;margin:0 auto;border:2px solid #ef4444;border-radius:10px;overflow:hidden">'+
+      '<div style="background:#ef4444;color:#fff;padding:16px 24px;font-size:20px;font-weight:bold">零件拉动控制塔预警</div>'+
+      '<div style="padding:24px;background:#1a1a2e;color:#e0e0e0;line-height:2">'+lines+'</div>'+
+      '<div style="background:#111;color:#666;padding:12px 24px;font-size:12px">此邮件由后台定时扫描自动发送 - '+t+'</div>'+
+      '</div></body></html>';
+    transporter.sendMail({ from: cfg.user, to: cfg.recipients, subject: title, html: html }).then(function(info){
+      sent[key] = now.toISOString();
+      saveAlertsSent(sent);
+      log('BG_ALERT_SENT: '+names);
+    }).catch(function(err){ log('BG_ALERT_ERR: '+err.message); });
+  } catch(err){ log('BG_ALERT_ERR: '+err.message); }
+}
+
 var PORT = process.env.PORT || 3456;
-app.listen(PORT, function() { log('STARTED:'+PORT); console.log('Server:'+PORT); });
+app.listen(PORT, function() {
+  log('STARTED:'+PORT); console.log('Server:'+PORT);
+  // Run background alert check every 5 minutes
+  checkBackgroundAlerts();
+  setInterval(checkBackgroundAlerts, 5*60*1000);
+});

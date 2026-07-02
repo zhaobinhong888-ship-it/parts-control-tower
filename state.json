@@ -1,5 +1,5 @@
 {
-  "productionStart": "2026-06-10T23:00:00.000Z",
+  "productionStart": "2026-07-01T23:00:00.000Z",
   "productionDays": 3,
   "currentViewDay": 0,
   "I_open": 22320,
@@ -19,55 +19,56 @@
       "id": "v_2",
       "name": "第2车",
       "targetDay": 0,
-      "dockTime": "2026-06-11T04:54:00.000Z",
+      "dockTime": "2026-07-02T05:15:00.000Z",
       "load": 7920,
       "status": "locked",
-      "depLatest": "2026-06-14T16:16:00.000Z",
-      "dockLatest": "2026-06-14T23:46:00.000Z",
-      "notes": ""
+      "depLatest": "2026-07-01T02:46:21.818Z",
+      "dockLatest": "2026-07-01T10:16:21.818Z",
+      "notes": "",
+      "shipId": "ship-294242n"
     },
     {
       "id": "v_3",
       "name": "第3车",
       "targetDay": 0,
-      "dockTime": "2026-06-11T06:55:00.000Z",
+      "dockTime": "2026-07-02T05:21:00.000Z",
       "load": 7920,
       "status": "locked",
-      "depLatest": "2026-06-11T08:13:38.229Z",
-      "dockLatest": "2026-06-11T15:43:38.229Z",
+      "depLatest": "2026-07-01T06:46:21.787Z",
+      "dockLatest": "2026-07-01T14:16:21.787Z",
       "notes": ""
     },
     {
       "id": "v_4",
       "name": "第4车",
       "targetDay": 0,
-      "dockTime": "2026-06-11T10:52:00.000Z",
+      "dockTime": "2026-07-02T05:34:00.000Z",
       "load": 7920,
       "status": "locked",
-      "depLatest": "2026-06-11T12:13:38.913Z",
-      "dockLatest": "2026-06-11T19:43:38.913Z",
+      "depLatest": "2026-07-02T15:30:00.466Z",
+      "dockLatest": "2026-07-02T23:00:00.466Z",
       "notes": ""
     },
     {
       "id": "v_5",
       "name": "第5车",
       "targetDay": 0,
-      "dockTime": "2026-06-11T11:52:00.000Z",
+      "dockTime": "2026-07-02T06:34:00.000Z",
       "load": 7920,
       "status": "locked",
-      "depLatest": "2026-06-11T16:13:37.378Z",
-      "dockLatest": "2026-06-11T23:43:37.378Z",
+      "depLatest": "2026-07-02T19:30:00.352Z",
+      "dockLatest": "2026-07-03T03:00:00.352Z",
       "notes": ""
     },
     {
       "id": "v_6",
       "name": "第6车",
       "targetDay": 0,
-      "dockTime": "2026-06-11T12:57:00.000Z",
+      "dockTime": "2026-07-02T16:33:00.000Z",
       "load": 7920,
       "status": "locked",
-      "depLatest": "2026-06-11T20:13:37.425Z",
-      "dockLatest": "2026-06-12T03:43:37.425Z",
+      "depLatest": "2026-07-02T23:29:59.867Z",
+      "dockLatest": "2026-07-03T06:59:59.867Z",
       "notes": ""
     },
     {
@@ -77,8 +78,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-03T03:29:59.373Z",
+      "dockLatest": "2026-07-03T10:59:59.373Z",
       "notes": ""
     },
     {
@@ -88,8 +89,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-04T01:56:58.746Z",
+      "dockLatest": "2026-07-04T09:26:58.746Z",
       "notes": ""
     },
     {
@@ -99,8 +100,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-05T04:23:58.119Z",
+      "dockLatest": "2026-07-05T11:53:58.119Z",
       "notes": ""
     },
     {
@@ -110,41 +111,41 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-06T10:50:57.492Z",
+      "dockLatest": "2026-07-06T18:20:57.492Z",
       "notes": ""
     },
     {
       "id": "v_11",
       "name": "第11车",
-      "targetDay": 2,
+      "targetDay": 1,
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-07T21:17:56.865Z",
+      "dockLatest": "2026-07-08T04:47:56.865Z",
       "notes": ""
     },
     {
       "id": "v_12",
       "name": "第12车",
-      "targetDay": 2,
+      "targetDay": 1,
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-09T11:44:56.238Z",
+      "dockLatest": "2026-07-09T19:14:56.238Z",
       "notes": ""
     },
     {
       "id": "v_13",
       "name": "第13车",
-      "targetDay": 2,
+      "targetDay": 1,
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-11T06:11:55.611Z",
+      "dockLatest": "2026-07-11T13:41:55.611Z",
       "notes": ""
     },
     {
@@ -154,41 +155,174 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-13T04:38:54.984Z",
+      "dockLatest": "2026-07-13T12:08:54.984Z",
       "notes": ""
     },
     {
       "id": "v_22",
       "name": "第14车",
-      "targetDay": 2,
+      "shipId": "",
+      "targetDay": 0,
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-06-12T00:13:38.437Z",
-      "dockLatest": "2026-06-12T07:43:38.437Z",
+      "depLatest": "2026-07-15T07:05:54.357Z",
+      "dockLatest": "2026-07-15T14:35:54.357Z",
+      "notes": ""
+    },
+    {
+      "id": "v_23",
+      "name": "第15车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-07-17T13:32:53.730Z",
+      "dockLatest": "2026-07-17T21:02:53.730Z",
+      "notes": ""
+    },
+    {
+      "id": "v_24",
+      "name": "第16车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-07-19T23:59:53.103Z",
+      "dockLatest": "2026-07-20T07:29:53.103Z",
+      "notes": ""
+    },
+    {
+      "id": "v_25",
+      "name": "第17车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-07-22T14:26:52.476Z",
+      "dockLatest": "2026-07-22T21:56:52.476Z",
+      "notes": ""
+    },
+    {
+      "id": "v_26",
+      "name": "第18车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-07-25T08:53:51.849Z",
+      "dockLatest": "2026-07-25T16:23:51.849Z",
+      "notes": ""
+    },
+    {
+      "id": "v_27",
+      "name": "第19车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-07-28T07:20:51.222Z",
+      "dockLatest": "2026-07-28T14:50:51.222Z",
+      "notes": ""
+    },
+    {
+      "id": "v_28",
+      "name": "第20车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-07-31T09:47:50.595Z",
+      "dockLatest": "2026-07-31T17:17:50.595Z",
+      "notes": ""
+    },
+    {
+      "id": "v_29",
+      "name": "第21车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-08-03T16:14:49.968Z",
+      "dockLatest": "2026-08-03T23:44:49.968Z",
+      "notes": ""
+    },
+    {
+      "id": "v_30",
+      "name": "第22车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-08-07T02:41:49.341Z",
+      "dockLatest": "2026-08-07T10:11:49.341Z",
+      "notes": ""
+    },
+    {
+      "id": "v_31",
+      "name": "第23车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-08-10T17:08:48.714Z",
+      "dockLatest": "2026-08-11T00:38:48.714Z",
+      "notes": ""
+    },
+    {
+      "id": "v_32",
+      "name": "第24车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-08-14T11:35:48.087Z",
+      "dockLatest": "2026-08-14T19:05:48.087Z",
+      "notes": ""
+    },
+    {
+      "id": "v_33",
+      "name": "第25车",
+      "shipId": "",
+      "targetDay": 0,
+      "dockTime": null,
+      "load": 7920,
+      "status": "pending",
+      "depLatest": "2026-08-18T10:02:47.460Z",
+      "dockLatest": "2026-08-18T17:32:47.460Z",
       "notes": ""
     }
   ],
   "dailyInventory": [
     {
-      "pallets": 70,
-      "pcs": 25200,
+      "pallets": 88,
+      "pcs": 31680,
+      "adjusted": true,
+      "locked": true
+    },
+    {
+      "pallets": 78,
+      "pcs": 28080,
       "adjusted": false,
       "locked": false
     },
     {
-      "pallets": 40,
-      "pcs": 14400,
-      "adjusted": false,
-      "locked": false
-    },
-    {
-      "pallets": -92,
-      "pcs": -33120,
-      "adjusted": false,
-      "locked": false
+      "pallets": 60,
+      "pcs": 21600,
+      "adjusted": true,
+      "locked": true
     }
   ],
-  "updatedAt": "2026-06-11T07:55:08.097Z"
+  "updatedAt": "2026-07-02T14:32:26.647Z"
 }

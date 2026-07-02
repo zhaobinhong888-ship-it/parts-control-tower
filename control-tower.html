@@ -225,7 +225,7 @@
         <span class="card-header" style="margin-bottom:0">🚛 车辆排程</span>
         <span>🟡待填报 <span id="pendingCount">0</span> &nbsp; ✅已锁定 <span id="lockedCount">0</span> &nbsp; 🔴超时 <span id="overdueCount">0</span></span>
       </div>
-      <div style="overflow-x:auto;margin-top:.5rem"><table class="v-table" id="vehicleTable"><thead><tr><th>车次</th><th>到货日</th><th>计划靠台</th><th>物料可用</th><th>最晚靠台</th><th>最晚发车</th><th>装载(pcs)</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+      <div style="overflow-x:auto;margin-top:.5rem"><table class="v-table" id="vehicleTable"><thead><tr><th>车次</th><th>Ship号</th><th>到货日</th><th>计划靠台</th><th>物料可用</th><th>最晚靠台</th><th>最晚发车</th><th>装载</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table></div>
       <div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center">
         <button class="btn-sm add" onclick="addVehicle()">+ 添加车次</button>
         <span style="font-size:.7rem;color:var(--text-dim)">共 <span id="totalVehicles">0</span> 车</span>
@@ -784,7 +784,14 @@ function rebuildVehicleTable(){
     if(v.isOverdue&&v.status==='pending'){
       statusHtml=v.isWarning?'<span class="badge badge-pending" style="background:rgba(245,158,11,.3);color:#ffb700">⚠️ 即将超时</span>':'<span class="badge badge-overdue">⏰ 超时未填!</span>';
     }else{statusHtml='<span class="badge '+badgeCls[v.status]+'">'+statusLabel[v.status]+'</span>';}
-    let timeCell,actionCell;
+    let timeCell,actionCell,shipCell;
+    var shipVal=v.shipId||'';
+    if(isEditMode){
+      shipCell='<input type="text" class="dock-input" style="width:80px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveState();}\" placeholder="Ship#">';
+    } else {
+      shipCell=shipVal||'<span style="color:var(--text-dim)">--</span>';
+    }
+
     if(v.status==='pending'||v.status==='locked'){
       if (isEditMode){
         const val=v.dockTime?toLocalDatetimeStr(new Date(v.dockTime)):'';
@@ -800,7 +807,7 @@ function rebuildVehicleTable(){
       actionCell='<span style="font-size:.7rem;color:var(--text-dim)">已到港</span>';
     }
     const delBtn=isEditMode?((v.status==='pending'&&!v.dockTime)?'<button class="btn-del" onclick="deleteVehicle(\''+v.id+'\')" title="删除">✕</button>':(v.status==='locked'?'<button class="btn-del" style="border-color:rgba(245,158,11,.4);color:var(--yellow)" onclick="clearDockTime(\''+v.id+'\')" title="清除靠台时间">↩</button>':'')):'';
-    return '<tr class="'+(v.isOverdue?'overdue':'')+'"><td style="font-weight:600">'+v.name+'</td><td>第'+(v.targetDay+1)+'天</td><td>'+timeCell+'</td><td>'+ (v.dockTime?fmtDateTime(new Date(new Date(v.dockTime).getTime()+state.T_rest*3600000)):'--') +'</td><td>'+ (v.dockLatest?fmtDateTime(new Date(v.dockLatest)):'--') +'</td><td>'+ (v.depLatest?fmtDateTime(new Date(v.depLatest)):'--') +'</td><td>'+v.load+'</td><td>'+statusHtml+'</td><td>'+actionCell+' '+delBtn+'</td></tr>';
+    return '<tr class="'+(v.isOverdue?'overdue':'')+'"><td style="font-weight:600">'+v.name+'</td><td>'+shipCell+'</td><td>第'+(v.targetDay+1)+'天</td><td>'+timeCell+'</td><td>'+ (v.dockTime?fmtDateTime(new Date(new Date(v.dockTime).getTime()+state.T_rest*3600000)):'--') +'</td><td>'+ (v.dockLatest?fmtDateTime(new Date(v.dockLatest)):'--') +'</td><td>'+ (v.depLatest?fmtDateTime(new Date(v.depLatest)):'--') +'</td><td>'+v.load+'</td><td>'+statusHtml+'</td><td>'+actionCell+' '+delBtn+'</td></tr>';
   }).join('');
 
   document.getElementById('pendingCount').textContent=pendingVs;
@@ -956,7 +963,7 @@ function addVehicle(){
   var maxId=0; state.vehicles.forEach(function(x){var m=(x.id||'').match(/^v_(\d+)$/);if(m){var n=parseInt(m[1]);if(n>maxId)maxId=n;}});
   if(maxId>vehIdCounter) vehIdCounter=maxId;
   const idx=state.vehicles.length+1;
-  const v={id:'v_'+(++vehIdCounter),name:'第'+idx+'车',targetDay:state.currentViewDay,dockTime:null,load:state.Q,status:'pending',depLatest:'',dockLatest:'',notes:''};
+  const v={id:'v_'+(++vehIdCounter),name:'第'+idx+'车',shipId:'',targetDay:state.currentViewDay,dockTime:null,load:state.Q,status:'pending',depLatest:'',dockLatest:'',notes:''};
   state.vehicles.push(v);
   saveStateImmediate();updateAll();
   addLog('➕ 已添加 '+v.name+'（到货日：第'+(v.targetDay+1)+'天）','info');
@@ -1049,6 +1056,9 @@ function recalcVehicleDeadlines(){
     const remainingH=stock/state.c;
     pending[i].dockLatest=new Date(t.getTime()+remainingH*3600000).toISOString();
     pending[i].depLatest=new Date(t.getTime()+(remainingH-state.T_trans)*3600000).toISOString();
+    // Simulate this vehicle arriving: stock replenishes for the NEXT vehicle's deadline
+    stock+=(pending[i].load||state.Q);
+    t=new Date(t.getTime()+remainingH*3600000);
   }
   saveState();
 }

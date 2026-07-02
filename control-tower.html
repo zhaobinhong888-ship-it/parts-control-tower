@@ -225,7 +225,7 @@
         <span class="card-header" style="margin-bottom:0">🚛 车辆排程</span>
         <span>🟡待填报 <span id="pendingCount">0</span> &nbsp; ✅已锁定 <span id="lockedCount">0</span> &nbsp; 🔴超时 <span id="overdueCount">0</span></span>
       </div>
-      <div style="overflow-x:auto;margin-top:.5rem"><table class="v-table" id="vehicleTable"><thead><tr><th>车次</th><th>Ship号</th><th>到货日</th><th>计划靠台</th><th>物料可用</th><th>最晚靠台</th><th>最晚发车</th><th>装载</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+      <div style="overflow-x:auto;margin-top:.5rem"><table class="v-table" id="vehicleTable"><thead><tr><th>车次</th><th>Ship号/车牌</th><th>到货日</th><th>计划靠台</th><th>物料可用</th><th>最晚靠台</th><th>最晚发车</th><th>装载</th><th>状态</th><th>操作</th></tr></thead><tbody></tbody></table></div>
       <div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center">
         <button class="btn-sm add" onclick="addVehicle()">+ 添加车次</button>
         <span style="font-size:.7rem;color:var(--text-dim)">共 <span id="totalVehicles">0</span> 车</span>
@@ -239,7 +239,7 @@
         <span style="font-size:.65rem;color:var(--text-dim)">承运商追踪</span>
       </div>
       <div style="display:flex;gap:.4rem;margin:.5rem 0;align-items:center">
-        <input type="text" id="gpsBaseUrl" placeholder="轨迹网址模板，{id}替换运单号" style="flex:1;background:#111;border:1px solid #222;border-radius:6px;color:#e0e0e0;padding:.35rem .5rem;font-size:.72rem;font-family:'JetBrains Mono','Consolas',monospace;outline:none">
+        <input type="text" id="gpsBaseUrl" placeholder="轨迹网址模板，{id}=Ship号 {plate}=车牌" style="flex:1;background:#111;border:1px solid #222;border-radius:6px;color:#e0e0e0;padding:.35rem .5rem;font-size:.72rem;font-family:'JetBrains Mono','Consolas',monospace;outline:none">
         <button class="btn-sm test" onclick="loadGpsIframe()" style="font-size:.65rem">🔄 加载</button>
         <span style="font-size:.6rem;color:#666">自动选当前页第一辆有Ship号的车</span>
       </div>
@@ -802,7 +802,10 @@ function rebuildVehicleTable(){
     let timeCell,actionCell,shipCell;
     var shipVal=v.shipId||'';
     if(isEditMode){
-      shipCell='<input type="text" class="dock-input" style="width:140px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveState();}\" placeholder="Ship#">';
+      var plateVal=v.plate||'';
+shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveState();}\" placeholder="Ship#">';
+if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;saveState();}\" placeholder="车牌">';
+else if(plateVal) shipCell+=' <span style="font-size:.65rem;color:var(--cyan)">🚛'+plateVal+'</span>';
     } else {
       shipCell=shipVal||'<span style="color:var(--text-dim)">--</span>';
     }
@@ -899,7 +902,9 @@ function loadGpsIframe(){
   var vs=state.vehicles.filter(function(v){return v.shipId;});
   if(vs.length===0){ document.getElementById('gpsInfo').textContent='当前没有填写Ship号的车辆'; return; }
   var shipId=vs[0].shipId;
-  var url=baseUrl.replace(/\{id\}/g,shipId);
+  // Support both shipId and plate number
+  var plate=vs[0].plate||'';
+  var url=baseUrl.replace(/\{id\}/g,shipId).replace(/\{plate\}/g,plate);
   document.getElementById('gpsIframe').src=url;
   document.getElementById('gpsInfo').textContent='当前追踪：'+vs[0].name+' · Ship: '+shipId+' · '+url;
   // Save baseUrl to state
@@ -992,7 +997,7 @@ function addVehicle(){
   var maxId=0; state.vehicles.forEach(function(x){var m=(x.id||'').match(/^v_(\d+)$/);if(m){var n=parseInt(m[1]);if(n>maxId)maxId=n;}});
   if(maxId>vehIdCounter) vehIdCounter=maxId;
   const idx=state.vehicles.length+1;
-  const v={id:'v_'+(++vehIdCounter),name:'第'+idx+'车',shipId:'',targetDay:state.currentViewDay,dockTime:null,load:state.Q,status:'pending',depLatest:'',dockLatest:'',notes:''};
+  const v={id:'v_'+(++vehIdCounter),name:'第'+idx+'车',shipId:'',plate:'',targetDay:state.currentViewDay,dockTime:null,load:state.Q,status:'pending',depLatest:'',dockLatest:'',notes:''};
   state.vehicles.push(v);
   recalcVehicleDeadlines();
   saveStateImmediate();updateAll();

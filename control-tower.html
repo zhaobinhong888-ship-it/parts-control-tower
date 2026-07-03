@@ -803,8 +803,8 @@ function rebuildVehicleTable(){
     var shipVal=v.shipId||'';
     if(isEditMode){
       var plateVal=v.plate||'';
-shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveStateImmediate();localStorage.setItem("controlTowerV2State",JSON.stringify(state));}\" placeholder="Ship#">';
-if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;saveStateImmediate();localStorage.setItem("controlTowerV2State",JSON.stringify(state));}\" placeholder="车牌">';
+shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;localStorage.setItem("controlTowerV2State",JSON.stringify(state));saveStateImmediate();localStorage.setItem("controlTowerV2State",JSON.stringify(state));}\" placeholder="Ship#">';
+if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;localStorage.setItem("controlTowerV2State",JSON.stringify(state));saveStateImmediate();localStorage.setItem("controlTowerV2State",JSON.stringify(state));}\" placeholder="车牌">';
 else if(plateVal) shipCell+=' <span style="font-size:.65rem;color:var(--cyan)">🚛'+plateVal+'</span>';
     } else {
       shipCell=shipVal||'<span style="color:var(--text-dim)">--</span>';
@@ -923,6 +923,8 @@ function loadGpsIframe(){
 }
 
 function updateAll(){
+  // Collect all inputs before any table rebuild (prevents data loss)
+  collectShipPlateInputs();
   // Toggle read-only state on all inputs
   var inputs = document.querySelectorAll('input:not(#editPasswordInput):not(#inSmtpPass), select, textarea');
   var buttons = document.querySelectorAll('.btn-dock, .btn-sm.add, .btn-del, #inDayPallets ~ button');

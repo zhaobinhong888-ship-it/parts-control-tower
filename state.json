@@ -25,7 +25,8 @@
       "depLatest": "2026-07-01T02:46:21.818Z",
       "dockLatest": "2026-07-01T10:16:21.818Z",
       "notes": "",
-      "shipId": "ship-294242n"
+      "shipId": "ship-294242n",
+      "plate": "浙AD5559"
     },
     {
       "id": "v_3",
@@ -36,7 +37,9 @@
       "status": "locked",
       "depLatest": "2026-07-01T06:46:21.787Z",
       "dockLatest": "2026-07-01T14:16:21.787Z",
-      "notes": ""
+      "notes": "",
+      "shipId": "SHIP-122141",
+      "plate": "浙AD5559"
     },
     {
       "id": "v_4",
@@ -155,8 +158,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-04T07:29:59.815Z",
-      "dockLatest": "2026-07-04T14:59:59.815Z",
+      "depLatest": "2026-07-04T07:29:59.207Z",
+      "dockLatest": "2026-07-04T14:59:59.207Z",
       "notes": ""
     },
     {
@@ -167,8 +170,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-05T18:50:59.630Z",
-      "dockLatest": "2026-07-06T02:20:59.630Z",
+      "depLatest": "2026-07-05T18:50:58.414Z",
+      "dockLatest": "2026-07-06T02:20:58.414Z",
       "notes": ""
     },
     {
@@ -179,8 +182,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-07T10:11:59.445Z",
-      "dockLatest": "2026-07-07T17:41:59.445Z",
+      "depLatest": "2026-07-07T10:11:57.621Z",
+      "dockLatest": "2026-07-07T17:41:57.621Z",
       "notes": ""
     },
     {
@@ -191,8 +194,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-09T05:32:59.260Z",
-      "dockLatest": "2026-07-09T13:02:59.260Z",
+      "depLatest": "2026-07-09T05:32:56.828Z",
+      "dockLatest": "2026-07-09T13:02:56.828Z",
       "notes": ""
     },
     {
@@ -203,8 +206,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-11T04:53:59.075Z",
-      "dockLatest": "2026-07-11T12:23:59.075Z",
+      "depLatest": "2026-07-11T04:53:56.035Z",
+      "dockLatest": "2026-07-11T12:23:56.035Z",
       "notes": ""
     },
     {
@@ -215,8 +218,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-13T08:14:58.890Z",
-      "dockLatest": "2026-07-13T15:44:58.890Z",
+      "depLatest": "2026-07-13T08:14:55.242Z",
+      "dockLatest": "2026-07-13T15:44:55.242Z",
       "notes": ""
     },
     {
@@ -227,8 +230,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-15T15:35:58.705Z",
-      "dockLatest": "2026-07-15T23:05:58.705Z",
+      "depLatest": "2026-07-15T15:35:54.449Z",
+      "dockLatest": "2026-07-15T23:05:54.449Z",
       "notes": ""
     },
     {
@@ -239,8 +242,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-18T02:56:58.520Z",
-      "dockLatest": "2026-07-18T10:26:58.520Z",
+      "depLatest": "2026-07-18T02:56:53.656Z",
+      "dockLatest": "2026-07-18T10:26:53.656Z",
       "notes": ""
     },
     {
@@ -251,8 +254,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-20T18:17:58.335Z",
-      "dockLatest": "2026-07-21T01:47:58.335Z",
+      "depLatest": "2026-07-20T18:17:52.863Z",
+      "dockLatest": "2026-07-21T01:47:52.863Z",
       "notes": ""
     },
     {
@@ -263,8 +266,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-23T13:38:58.150Z",
-      "dockLatest": "2026-07-23T21:08:58.150Z",
+      "depLatest": "2026-07-23T13:38:52.070Z",
+      "dockLatest": "2026-07-23T21:08:52.070Z",
       "notes": ""
     },
     {
@@ -275,8 +278,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-26T12:59:57.965Z",
-      "dockLatest": "2026-07-26T20:29:57.965Z",
+      "depLatest": "2026-07-26T12:59:51.277Z",
+      "dockLatest": "2026-07-26T20:29:51.277Z",
       "notes": ""
     },
     {
@@ -287,8 +290,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-07-29T16:20:57.780Z",
-      "dockLatest": "2026-07-29T23:50:57.780Z",
+      "depLatest": "2026-07-29T16:20:50.484Z",
+      "dockLatest": "2026-07-29T23:50:50.484Z",
       "notes": ""
     },
     {
@@ -299,8 +302,8 @@
       "dockTime": null,
       "load": 7920,
       "status": "pending",
-      "depLatest": "2026-08-01T23:41:57.595Z",
-      "dockLatest": "2026-08-02T07:11:57.595Z",
+      "depLatest": "2026-08-01T23:41:49.691Z",
+      "dockLatest": "2026-08-02T07:11:49.691Z",
       "notes": ""
     }
   ],
@@ -324,5 +327,5 @@
       "locked": true
     }
   ],
-  "updatedAt": "2026-07-02T14:41:06.115Z"
+  "updatedAt": "2026-07-03T06:52:41.432Z"
 }

@@ -803,8 +803,8 @@ function rebuildVehicleTable(){
     var shipVal=v.shipId||'';
     if(isEditMode){
       var plateVal=v.plate||'';
-shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveStateImmediate();}\" placeholder="Ship#">';
-if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;saveStateImmediate();}\" placeholder="车牌">';
+shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveStateImmediate();localStorage.setItem("controlTowerV2State",JSON.stringify(state));}\" placeholder="Ship#">';
+if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;saveStateImmediate();localStorage.setItem("controlTowerV2State",JSON.stringify(state));}\" placeholder="车牌">';
 else if(plateVal) shipCell+=' <span style="font-size:.65rem;color:var(--cyan)">🚛'+plateVal+'</span>';
     } else {
       shipCell=shipVal||'<span style="color:var(--text-dim)">--</span>';
@@ -893,6 +893,17 @@ function updateNextMonday(){
 
   document.getElementById('nextMondayPallets').textContent=pallets+' 托';
   document.getElementById('nextMondayDetail').textContent='= '+totalPcs.toLocaleString()+' pcs · 周收班库存'+Math.round(stock).toLocaleString()+' + 在途'+transitPcs.toLocaleString()+' · '+stillTransit.length+'车未到';
+}
+
+function collectShipPlateInputs(){
+  // Read all ship/plate inputs from DOM and save to state (prevents loss on table rebuild)
+  state.vehicles.forEach(function(v){
+    var si=document.getElementById('shipInput_'+v.id);
+    if(si) v.shipId=si.value;
+    var pi=document.getElementById('plateInput_'+v.id);
+    if(pi) v.plate=pi.value;
+  });
+  saveStateImmediate();
 }
 
 function loadGpsIframe(){
@@ -1045,7 +1056,8 @@ function setVehicleDock(id,value){
   const prodStart=new Date(state.productionStart);
   const dayDiff=Math.floor((dt-prodStart)/86400000);
   if(dayDiff>=0) state.vehicles[idx].targetDay=dayDiff;
-  // Recalc this vehicle + all pending vehicles that follow
+  // Save all pending ship/plate inputs before table rebuild
+  collectShipPlateInputs();
   recalcVehicleDeadlines();
   saveStateImmediate();updateAll();
   addLog('✅ '+state.vehicles[idx].name+' 靠台时间 '+fmtDateTime(dt)+' · 库存+'+state.vehicles[idx].load.toLocaleString()+'pcs','info');

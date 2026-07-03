@@ -803,8 +803,8 @@ function rebuildVehicleTable(){
     var shipVal=v.shipId||'';
     if(isEditMode){
       var plateVal=v.plate||'';
-shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveState();}\" placeholder="Ship#">';
-if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;saveState();}\" placeholder="车牌">';
+shipCell='<input type="text" class="dock-input" style="width:130px" id="shipInput_'+v.id+'" value="'+shipVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].shipId=this.value;saveStateImmediate();}\" placeholder="Ship#">';
+if(isEditMode) shipCell+=' <input type="text" class="dock-input" style="width:80px;margin-left:2px" id="plateInput_'+v.id+'" value="'+plateVal+'" onchange=\"var idx=state.vehicles.findIndex(function(x){return x.id===\''+v.id+'\'});if(idx>=0){state.vehicles[idx].plate=this.value;saveStateImmediate();}\" placeholder="车牌">';
 else if(plateVal) shipCell+=' <span style="font-size:.65rem;color:var(--cyan)">🚛'+plateVal+'</span>';
     } else {
       shipCell=shipVal||'<span style="color:var(--text-dim)">--</span>';
